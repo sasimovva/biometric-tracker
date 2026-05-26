@@ -1,0 +1,80 @@
+[
+  {
+    "date": "2026-05-24",
+    "day_of_week": "Sunday",
+    "activity_type": "Hiking",
+    "title": "Superior Hiking",
+    "start_time": "07:26:00",
+    "distance_miles": 10.54,
+    "duration": "03:20:11",
+    "avg_pace": "18:59",
+    "calories_burned": 1151,
+    "active_calories": 863,
+    "resting_calories": 288,
+    "avg_hr": 114,
+    "max_hr": 146,
+    "elevation_gain_ft": 659,
+    "elevation_loss_ft": 653,
+    "steps": 21996,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.5,
+      "anaerobic": 0.0,
+      "load": 75
+    },
+    "intensity_minutes": 198,
+    "body_battery_impact": -36
+  },
+  {
+    "date": "2026-05-25",
+    "day_of_week": "Monday",
+    "activity_type": "Hiking",
+    "title": "Superior Hiking",
+    "start_time": "07:41:00",
+    "distance_miles": 5.96,
+    "duration": "01:49:22",
+    "avg_pace": "18:21",
+    "calories_burned": 648,
+    "active_calories": 491,
+    "resting_calories": 157,
+    "avg_hr": 110,
+    "max_hr": 131,
+    "elevation_gain_ft": 364,
+    "elevation_loss_ft": 361,
+    "steps": 12196,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 2.9,
+      "anaerobic": 0.0,
+      "load": 43
+    },
+    "intensity_minutes": 105,
+    "body_battery_impact": -21
+  },
+  {
+    "date": "2026-05-26",
+    "day_of_week": "Tuesday",
+    "activity_type": "Hiking",
+    "title": "Boulder County Hiking",
+    "start_time": "13:22:00",
+    "distance_miles": 5.63,
+    "duration": "01:36:03",
+    "avg_pace": "17:03",
+    "calories_burned": 627,
+    "active_calories": 488,
+    "resting_calories": 139,
+    "avg_hr": 115,
+    "max_hr": 143,
+    "elevation_gain_ft": 463,
+    "elevation_loss_ft": 446,
+    "steps": 11016,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.1,
+      "anaerobic": 0.0,
+      "load": 55
+    },
+    "intensity_minutes": 87,
+    "body_battery_impact": -24
+  }
+]
