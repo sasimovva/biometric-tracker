@@ -17,3 +17,4 @@ Welcome to your Antigravity 2.0 biometric tracking workspace index. To prevent l
 
 ## 📋 Protocol Source of Truth
 * 🧬 **Reference Baseline:** [knowledge/protocol_baseline.md](file:///Users/sasi/pers/biometric-tracker/knowledge/protocol_baseline.md)
+* 🏋️ **Training Program:** [knowledge/workout_routine.md](file:///Users/sasi/pers/biometric-tracker/knowledge/workout_routine.md)
