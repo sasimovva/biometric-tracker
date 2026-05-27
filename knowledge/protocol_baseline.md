@@ -6,14 +6,18 @@
 * **Neurological:** Eliminate the 3:00 AM sleep wake-up by stabilizing the nighttime liver glycogen tank.
 
 ## 2. Fixed Guardrails
-* **Time-Restricted Feeding (TRF):** 9:30 AM to 2:00 PM strict eating window.
+* **Time-Restricted Feeding (TRF):** 9:30 AM to 2:00 PM strict eating window on eating days.
+* **Weekly 36-Hour Extended Fast:**
+    * **Duration:** Starts Thursday at 2:00 PM (at TRF window closure) and ends Saturday morning after the parkrun (approx. 9:00 AM – 10:00 AM).
+    * **Objective:** Deep cellular autophagy, visceral fat reduction, and absolute insulin reset.
+    * **Fast-State parkrun:** Executed in the final hours of the 36-hour fast to deplete residual glycogen and maximize fat oxidation.
 * **The "Smart-Cook" Rule:** Oats pressure-cooked for 10 mins only (or cooked & cooled night before for RS3). Flax meal, cinnamon, walnuts, and creatine added *after* cooling below 140°F to prevent oxidation and starch melting.
 * **RS2 Supplement Titration (Bob's Red Mill Unmodified Potato Starch):**
     * *Week 1 (Current):* 1 tbsp total in 9:30 AM cooled oats.
     * *Week 2:* 2 tbsp total (1 tbsp oats / 1 tbsp 1:00 PM smoothie).
     * *Week 3:* 3 tbsp total (1 tbsp oats / 2 tbsp smoothie).
     * *Week 4 (Clinical Study Target):* 4 tbsp total (2 tbsp oats / 2 tbsp smoothie).
-* **Hydration:** 3.5 Liters daily minimum (critical for processing 70g+ total fiber and 5g creatine).
+* **Hydration & Electrolytes:** 3.5 Liters daily minimum (critical for processing 70g+ total fiber and 5g creatine). *During the 36-hour fast: Supplement with pure sodium and magnesium, avoiding added potassium due to 25mg Losartan potassium-retention properties.*
 
 ## 3. Medication & Supplement Protocol
 * **Cardiovascular & Blood Pressure (BP) Control:**

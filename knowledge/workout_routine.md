@@ -41,15 +41,19 @@ This training program integrates High-Intensity Interval Training (HIIT) on the 
 * **Target:** Steady, continuous movement on flat or gently rolling terrain. 
 * **Rule:** If you cannot carry on a full conversation without pausing for breath, you have slipped out of Zone 2. Slow down your pace to maximize fat oxidation.
 
----
-
 ## 🚨 Safety & Progression Guardrails
 
+> [!CAUTION]
+> **36-Hour Fasted parkrun Safety (Electrolytes & Losartan):**
+> Extended fasting (36 hours) causes your insulin levels to drop, leading to rapid sodium excretion by your kidneys. Because you take **25mg Losartan** (which already lowers blood pressure), running a high-intensity 5K at the end of a 36-hour fast carries a risk of **orthostatic hypotension** (dizziness, lightheadedness) and severe muscle cramping.
+> * **Action:** Drink **500ml of water with 1,000–1,500mg of pure sodium (e.g., Redmond Real Salt)** 30 to 45 minutes *before* the Saturday morning parkrun. Avoid taking potassium supplements, as Losartan naturally causes potassium retention.
+
 > [!IMPORTANT]
-> **HIIT & Running Progression:**
-> Because you are re-introducing intervals and running, focus strictly on **pacing**. Do not push to absolute breathlessness (Zone 5) in the first 2 weeks. Aim for Zone 4 peak heart rates. This ensures endothelial lining protection and prevents sudden BP spikes.
+> **Glycogen Depletion Pacing:**
+> By Saturday morning, you will be 30+ hours fasted. Your liver and muscle glycogen stores will be almost completely depleted, forcing your body to rely primarily on fat oxidation and gluconeogenesis.
+> * **Action:** Pace your 5K conservatively in **Zone 3**. If you sprint anaerobically at the start, you will deplete your remaining glucose and "bonk" (sudden, severe fatigue). A steady, high-aerobic pace will optimize fat-burning adaptations.
 
 > [!TIP]
-> **Hydration Matching:**
-> Increase your fluid intake by **500ml** on Saturday (parkrun) and Sunday (Rucking) days to support the higher physical volume and creatine processing.
+> **Post-Fast Refeed Strategy:**
+> Immediately after your parkrun, break your 36-hour fast with your **Cooled Oats Breakfast** (including flax, walnuts, creatine, and unmodified potato starch). This supplies complex carbs to gently restock glycogen, healthy fats to support hormones, and high-quality protein for muscle repair without triggering digestive distress.
 
