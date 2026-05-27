@@ -27,7 +27,7 @@
     {
       "id": "evening_fast_shutdown",
       "cron": "0 14 * * *",
-      "prompt": "/goal Verify that the TRF window closed strictly at 2:00 PM. Note total protein intake (Target: 140g) and Week 1 RS2 potato starch dose (1 tbsp) in dashboards/2026-05.md."
+      "prompt": "/goal Verify that the TRF window closed strictly at 2:00 PM. Note RS2 potato starch dose in dashboards/2026-05.md."
     }
   ]
 }
