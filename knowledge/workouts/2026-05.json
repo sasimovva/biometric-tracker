@@ -130,5 +130,32 @@
     "intensity_minutes": 30,
     "body_battery_impact": -11,
     "notes": "Steady-state aerobic indoor cycling session. Focused cardio effort."
+  },
+  {
+    "date": "2026-05-30",
+    "day_of_week": "Saturday",
+    "activity_type": "Running",
+    "title": "parkrun 5K",
+    "start_time": "09:00:00",
+    "distance_miles": 3.11,
+    "duration": "00:38:59",
+    "avg_pace": "12:32",
+    "calories_burned": 387,
+    "active_calories": 351,
+    "resting_calories": 36,
+    "avg_hr": 152,
+    "max_hr": 170,
+    "elevation_gain_ft": 16,
+    "elevation_loss_ft": 16,
+    "steps": 5772,
+    "training_effect": {
+      "primary": "Threshold (High Aerobic)",
+      "aerobic": 4.0,
+      "anaerobic": 0.3,
+      "load": 152
+    },
+    "intensity_minutes": 74,
+    "body_battery_impact": -14,
+    "notes": "36-hour fasted parkrun 5K. Outstanding cardiovascular performance, sustained Zone 4 threshold training under glycogen-depleted state."
   }
 ]
