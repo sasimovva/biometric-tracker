@@ -8,13 +8,13 @@ This training program integrates High-Intensity Interval Training (HIIT) on the 
 
 | Day | Workout Type | Modality | Target Heart Rate / Intensity | Duration / Volume | Purpose |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Mon** | **Active Recovery** | Easy Walk / Flat Trail | Zone 1–2 (Avg < 110 bpm) | 5–6 Miles (Steady recovery) | Flush lactic acid, lower BP |
-| **Tue** | **HIIT Intervals** | Versaclimber | Zone 3–4 (Peak 130-145 bpm) | 20 Mins (20 sets of 30s on / 30s off) | Mitochondrial density, stroke volume |
-| **Wed** | **Zone 2 Aerobic** | Steady Outdoor Walk / Hike | Zone 2 (Strict 110–120 bpm) | 45–60 Mins (Steady pace) | Clean fat oxidation, vascular elasticity |
+| **Mon** | **Active Recovery** | Indoor Bike (Easy Spin) or Short Walk | Zone 1–2 (Strict < 110 bpm) | 30 Mins (2–3 Miles if walking) | Flush legs, stimulate blood flow, lower BP without overuse fatigue |
+| **Tue** | **HIIT Intervals** | Versaclimber | Zone 3–4 (Peak 130–145 bpm) | 20 Mins (20 sets of 30s on / 30s off) | Mitochondrial density, stroke volume |
+| **Wed** | **Zone 2 Aerobic** | Indoor Bike (Steady State) or Short Hike | Zone 2 (Strict 110–120 bpm) | 30–45 Mins | Perfect heart rate clamping for fat oxidation & vascular health |
 | **Thu** | **Full Rest** | Passive Recovery | N/A | Focus on Hydration (3.5L+) | Restore glycogen tanks & muscle repair |
 | **Fri** | **Priming & Recovery**| Easy Recovery Walk | Zone 1–2 (Strict < 110 bpm) | 20–30 Mins (Flush legs) | Prep legs and prime CNS for parkrun |
 | **Sat** | **Cardio / parkrun** | Timed 5K Outdoor Run | Zone 3–4 (Threshold running) | 5K / 3.1 Miles (Steady pace) | High-aerobic/Threshold capacity |
-| **Sun** | **Endurance Rucking** | Weighted Outdoor Hike | Zone 2 (Avg 110-120 bpm) | 6–8 Miles (with 15–20 lb pack) | Muscle preservation, low-impact base |
+| **Sun** | **Endurance Rucking** | Weighted Outdoor Hike | Zone 2 (Avg 110–120 bpm) | 6–8 Miles (with 15–20 lb pack) | Muscle preservation, low-impact base, weekend endurance focus |
 
 ---
 
@@ -37,9 +37,9 @@ This training program integrates High-Intensity Interval Training (HIIT) on the 
   * *Week 3–4:* Progress to **20 lbs** if shoulders and lower back feel stable.
 * **Postural Target:** Keep shoulders retracted and chest open to prevent shallow breathing.
 
-### 4. Active Recovery & Zone 2 (Walking / Hiking)
-* **Target:** Steady, continuous movement on flat or gently rolling terrain. 
-* **Rule:** If you cannot carry on a full conversation without pausing for breath, you have slipped out of Zone 2. Slow down your pace to maximize fat oxidation.
+### 4. Active Recovery & Zone 2 (Walking, Hiking, & Indoor Bike)
+* **Indoor Bike:** One of the single best modalities for strict Zone 2. Lock in a steady resistance and cadence to stay perfectly clamped in the 110–120 bpm range. For active recovery (Mondays), keep it to a very easy, low-resistance spin (< 110 bpm).
+* **Outdoors:** Focus on flat or gently rolling terrain. If you cannot carry on a full conversation without pausing for breath, you have slipped out of Zone 2. Slow down your pace to maximize fat oxidation.
 
 ## 🚨 Safety & Progression Guardrails
 

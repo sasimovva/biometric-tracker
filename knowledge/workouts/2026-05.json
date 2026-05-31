@@ -132,6 +132,33 @@
     "notes": "Steady-state aerobic indoor cycling session. Focused cardio effort."
   },
   {
+    "date": "2026-05-29",
+    "day_of_week": "Friday",
+    "activity_type": "Hiking",
+    "title": "Superior Hiking",
+    "start_time": "08:00:00",
+    "distance_miles": 10.40,
+    "duration": "03:12:30",
+    "avg_pace": "18:31",
+    "calories_burned": 1144,
+    "active_calories": 867,
+    "resting_calories": 277,
+    "avg_hr": 110,
+    "max_hr": 148,
+    "elevation_gain_ft": 666,
+    "elevation_loss_ft": 646,
+    "steps": 21380,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.5,
+      "anaerobic": 0.0,
+      "load": 74
+    },
+    "intensity_minutes": 185,
+    "body_battery_impact": -37,
+    "notes": "Long morning hike. Maintained stable low-aerobic heart rate."
+  },
+  {
     "date": "2026-05-30",
     "day_of_week": "Saturday",
     "activity_type": "Running",
