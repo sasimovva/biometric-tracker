@@ -184,5 +184,33 @@
     "intensity_minutes": 74,
     "body_battery_impact": -14,
     "notes": "36-hour fasted parkrun 5K. Outstanding cardiovascular performance, sustained Zone 4 threshold training under glycogen-depleted state."
+  },
+  {
+    "date": "2026-05-31",
+    "day_of_week": "Sunday",
+    "activity_type": "Rucking",
+    "title": "Endurance Rucking",
+    "start_time": "12:00:00",
+    "distance_miles": 3.54,
+    "duration": "01:04:00",
+    "avg_pace": "18:04",
+    "calories_burned": 436,
+    "active_calories": 344,
+    "resting_calories": 92,
+    "avg_hr": 111,
+    "max_hr": 128,
+    "elevation_gain_ft": 46,
+    "elevation_loss_ft": 39,
+    "steps": 7196,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 2.5,
+      "anaerobic": 0.0,
+      "load": 30
+    },
+    "intensity_minutes": 61,
+    "body_battery_impact": -17,
+    "pack_weight_lbs": 30,
+    "notes": "Endurance rucking session with 30 lbs pack weight. Preserved stable low-aerobic heart rate in strict Zone 2."
   }
 ]
