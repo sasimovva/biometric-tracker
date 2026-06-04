@@ -1,0 +1,29 @@
+[
+  {
+    "date": "2026-06-03",
+    "day_of_week": "Wednesday",
+    "activity_type": "Rucking",
+    "title": "Weighted Outdoor Hike (Ruck)",
+    "start_time": "17:00:00",
+    "distance_miles": 3.22,
+    "duration": "00:59:40",
+    "avg_pace": "18:31",
+    "calories_burned": 414,
+    "active_calories": 328,
+    "resting_calories": 86,
+    "avg_hr": 116,
+    "max_hr": 141,
+    "elevation_gain_ft": 249,
+    "elevation_loss_ft": 243,
+    "steps": 6670,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 2.8,
+      "anaerobic": 0.0,
+      "load": 39
+    },
+    "intensity_minutes": 65,
+    "body_battery_impact": -12,
+    "notes": "Endurance rucking session with 30 lbs pack weight. Consistent Low Aerobic stimulus."
+  }
+]
