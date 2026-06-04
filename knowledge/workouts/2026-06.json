@@ -52,5 +52,32 @@
     "intensity_minutes": 65,
     "body_battery_impact": -12,
     "notes": "Endurance rucking session with 30 lbs pack weight. Consistent Low Aerobic stimulus."
+  },
+  {
+    "date": "2026-06-04",
+    "day_of_week": "Thursday",
+    "activity_type": "Running",
+    "title": "Treadmill Running (Norwegian 4x4)",
+    "start_time": "08:30:00",
+    "distance_miles": 2.25,
+    "duration": "00:31:21",
+    "avg_pace": "13:56",
+    "calories_burned": 275,
+    "active_calories": 230,
+    "resting_calories": 45,
+    "avg_hr": 137,
+    "max_hr": 157,
+    "elevation_gain_ft": 0,
+    "elevation_loss_ft": 0,
+    "steps": 4199,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.0,
+      "anaerobic": 0.1,
+      "load": 49
+    },
+    "intensity_minutes": 47,
+    "body_battery_impact": -11,
+    "notes": "Norwegian 4x4 intervals session on treadmill. Cardiorespiratory endurance focus."
   }
 ]
