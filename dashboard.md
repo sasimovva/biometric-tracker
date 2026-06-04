@@ -5,12 +5,13 @@ Welcome to your Antigravity 2.0 biometric tracking workspace index. To prevent l
 ---
 
 ## 📅 Active Tracking Dashboards
-* 🟩 **Current Month:** [May 2026 Dashboard](file:///Users/sasi/pers/biometric-tracker/dashboards/2026-05.md)
+* 🟩 **Current Month:** [June 2026 Dashboard](file:///Users/sasi/pers/biometric-tracker/dashboards/2026-06.md)
+* 🗄️ **History:** [May 2026 Dashboard](file:///Users/sasi/pers/biometric-tracker/dashboards/2026-05.md)
 
 ---
 
 ## 🏃 Activity History & Analytics
-* 🥾 **Database:** Workouts are stored cleanly in month-segmented JSON (e.g., `knowledge/workouts/2026-05.json`).
+* 🥾 **Database:** Workouts are stored cleanly in month-segmented JSON (e.g., `knowledge/workouts/2026-06.json`).
 * 🧠 **Query Tool:** Run `./query_workouts.py` in your terminal to render and analyze workouts dynamically.
 
 ---

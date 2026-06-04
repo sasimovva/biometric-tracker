@@ -15,19 +15,19 @@
     {
       "trigger": "on_task_complete",
       "action": "update_dashboard",
-      "target": "./dashboards/2026-05.md"
+      "target": "./dashboards/2026-06.md"
     }
   ],
   "scheduled_tasks": [
     {
       "id": "morning_cgm_check",
       "cron": "0 7 * * *",
-      "prompt": "/align Check the 3:00 AM CGM trend line. Log if there was a nocturnal glucose dip (<75 mg/dL) or an adrenaline spike. Update dashboards/2026-05.md."
+      "prompt": "/align Check the 3:00 AM CGM trend line. Log if there was a nocturnal glucose dip (<75 mg/dL) or an adrenaline spike. Update dashboards/2026-06.md."
     },
     {
       "id": "evening_fast_shutdown",
-      "cron": "0 14 * * *",
-      "prompt": "/goal Verify that the TRF window closed strictly at 2:00 PM. Note RS2 potato starch dose in dashboards/2026-05.md."
+      "cron": "0 15 * * *",
+      "prompt": "/goal Verify that the TRF window closed strictly at 3:00 PM. Note RS2 potato starch dose in dashboards/2026-06.md."
     }
   ]
 }
