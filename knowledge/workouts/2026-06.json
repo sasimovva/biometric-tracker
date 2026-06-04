@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-06-02",
+    "day_of_week": "Tuesday",
+    "activity_type": "Indoor Cycling",
+    "title": "Indoor Cycling",
+    "start_time": "09:28:00",
+    "distance_miles": 0.0,
+    "duration": "00:31:19",
+    "avg_pace": "N/A",
+    "calories_burned": 275,
+    "active_calories": 230,
+    "resting_calories": 45,
+    "avg_hr": 136,
+    "max_hr": 152,
+    "elevation_gain_ft": 0,
+    "elevation_loss_ft": 0,
+    "steps": 0,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.0,
+      "anaerobic": 0.0,
+      "load": 46
+    },
+    "intensity_minutes": 50,
+    "body_battery_impact": -11,
+    "notes": "Steady-state aerobic indoor cycling session. Focused cardio effort."
+  },
+  {
     "date": "2026-06-03",
     "day_of_week": "Wednesday",
     "activity_type": "Rucking",
