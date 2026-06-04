@@ -7,15 +7,15 @@
 
 ---
 
-## 2. Fixed Guardrails
+### 2. Fixed Guardrails
 
-* **Time-Restricted Feeding (TRF):** 9:00 AM to 3:00 PM strict eating window on eating days (18/6 Window).
+* **Time-Restricted Feeding (TRF):** 11:00 AM to 7:00 PM strict eating window on eating days (16/8 Window).
 * **Weekly 36-Hour Extended Fast:**
-    * **Duration:** Starts Thursday at 3:00 PM (at TRF window closure) and ends Saturday morning after the parkrun (approx. 9:00 AM – 10:00 AM).
+    * **Duration:** Starts Thursday at 7:00 PM (at TRF window closure) and ends Saturday morning after the parkrun (approx. 9:00 AM – 10:00 AM, yielding a ~38-hour fast).
     * **Objective:** Deep cellular autophagy, visceral fat reduction, and absolute insulin reset.
-    * **Fast-State parkrun:** Executed in the final hours of the 36-hour fast to deplete residual glycogen and maximize fat oxidation.
+    * **Fast-State parkrun:** Executed in the final hours of the fast to deplete residual glycogen and maximize fat oxidation.
 * **The "Smart-Cook" Rule:** Steel-cut oats pressure-cooked in water. Flax meal, raw walnuts, and prunes added *after* cooling below 140°F to prevent oxidation.
-* **Prebiotic & Probiotic Guardrails:** Consolidate prebiotic targets into the cold 2:30 PM Mega-Smoothie. *Critical Temperature Rule: Always keep the smoothie base cold. If raw potato starch is exposed to liquids hotter than 130°F, it gelatinizes into a fast-digesting carb, erasing all visceral fat-burning and prebiotic properties.*
+* **Prebiotic & Probiotic Guardrails:** Consolidate prebiotic targets into the cold 11:00 AM Mega-Smoothie. *Critical Temperature Rule: Always keep the smoothie base cold. If raw potato starch is exposed to liquids hotter than 130°F, it gelatinizes into a fast-digesting carb, erasing all visceral fat-burning and prebiotic properties.*
 * **Hydration & Electrolytes:** 3.5 Liters daily minimum (critical for processing 59g daily fiber, 40g RS2, and 5g creatine). *During the 36-hour fast: Supplement with pure sodium and magnesium, avoiding added potassium due to 25mg Losartan potassium-retention properties.*
 
 ---
@@ -27,38 +27,20 @@
     * **Beet Gummies:** Nitric oxide pathway support for natural vasodilation and arterial flexibility.
     * **Aged Garlic:** Plaque reversal support, blood pressure regulation, and microcirculatory optimization.
 * **Glycemic & Visceral Fat Reduction:**
-    * **Berberine (Daily):** Metformin-mimetic AMPK activator taken *immediately before the first bite* of the 12:30 PM lunch. Sautéing with EVOO dramatically increases berberine's systemic absorption.
-    * **Unmodified Potato Starch (RS2):** 40g raw potato starch (approx. 2.5 to 3 level tablespoons) daily in the 2:30 PM Mega-Smoothie to promote gut butyrate production, reduce visceral fat, and stabilize sleep glucose.
+    * **Berberine (Daily):** Metformin-mimetic AMPK activator taken *immediately before the first bite* of the 6:30 PM dinner. Sautéing with EVOO dramatically increases berberine's systemic absorption.
+    * **Unmodified Potato Starch (RS2):** 40g raw potato starch (approx. 2.5 to 3 level tablespoons) daily in the 11:00 AM Mega-Smoothie to promote gut butyrate production, reduce visceral fat, and stabilize sleep glucose.
     * **Inulin Powder (5g):** Daily prebiotic soluble fiber in the Mega-Smoothie to selectively feed beneficial bifidobacteria.
     * **Pendulum Glucose Control Probiotic (Considering):** Targeted gut microbiome strains to stimulate natural butyrate production, manage post-meal glucose spikes, and support A1C management.
 * **Lipid Management & Longevity:**
     * **Niacin:** Primary lipid-suppression supplement targeting Lp(a) suppression and cholesterol optimization.
 * **Cellular Energy & Recovery:**
-    * **Creatine (5g Daily):** Taken daily in the 2:30 PM Mega-Smoothie for muscle energy, recovery, and direct gut barrier support. *Safety Rule: Stop all creatine intake 72 hours prior to any CMP blood draws to avoid an artificial eGFR drop.*
+    * **Creatine (5g Daily):** Taken daily in the 11:00 AM Mega-Smoothie for muscle energy, recovery, and direct gut barrier support. *Safety Rule: Stop all creatine intake 72 hours prior to any CMP blood draws to avoid an artificial eGFR drop.*
 
 ---
 
 ## 4. The Master Menu & Timeline (Next 8 Weeks)
 
-### 🟢 09:00 AM — Meal 1: The Powerhouse Breakfast (Open the Window)
-* **The Plate:**
-    * 1/2 cup uncooked steel-cut oats (cooked in water)
-    * 30g ground flax meal (added after cooling)
-    * 30g raw walnuts (added after cooling)
-    * 40g pitted prunes (approx. 4–5 pieces)
-* **Audited Metrics:** **~750 Calories** *(92g Carbs, 22g Protein, 37g Fat, ~22g Fiber)*
-* **Purpose:** Establishes a massive, slow-releasing wall of whole-food beta-glucans and healthy fats to trigger early-day upper GI satiety and fuel native butyrate-producing bacteria.
-
-### 🟡 12:30 PM — Meal 2: The Diverse Legume Lunch (The Savory Anchor)
-* **The Protocol:** Take **Berberine** immediately before your first bite.
-* **The Plate:**
-    * 1/2 cup uncooked French green lentils or black beans (cooked)
-    * **1 tbsp Extra Virgin Olive Oil (EVOO)** folded directly into the warm lentils
-    * 2 cups mixed cruciferous and allium vegetables (broccoli, Brussels sprouts, sliced onions, and minced garlic) sautéed in water or veggie broth
-* **Audited Metrics:** **~540 Calories** *(68g Carbs, 26g Protein, 16g Fat, ~20g Fiber)*
-* **Purpose:** The healthy monounsaturated fats from EVOO dramatically increase the systemic absorption of the berberine. Berberine activates AMPK to smoothly clear the ~68g lunch carbohydrate load, keeping your post-meal insulin completely flat.
-
-### 🔴 02:30 PM — Window Closer: The "Mega-Smoothie" (The Hormonal Vault)
+### 🟢 11:00 AM — Meal 1: The "Mega-Smoothie" (Open the Window)
 * **The Shaker:** Blend the following into **20–24 oz** of **cold** water and ice:
     * 1 scoop premium Protein Powder (Lean Whey Isolate or clean plant blend)
     * **40 grams RS2 (Raw Potato Starch)** — *approx. 2.5 to 3 level tablespoons*
@@ -67,7 +49,25 @@
     * 2 tbsp Raw, Non-Alkalized Cacao Powder
     * 1 tsp High-Quality Matcha Powder
 * **Audited Metrics:** **~360 Calories** *(54g Carbs, 32.5g Protein, 6.5g Fat, ~17g Fiber)*
-* **Purpose:** Consolidates heavy-dose prebiotics and supplements into a single liquid delivery system. The intense bitter plant compounds from raw cacao and matcha trigger intestinal T2R taste receptors, ordering an immediate, natural dump of GLP-1 into your bloodstream to carry you into the fast.
+* **Purpose:** Opens your feeding window with a massive delivery of prebiotics, cellular protein, and antioxidants. Consuming this after morning fasted cardio/intervals accelerates recovery and supports gut barrier integrity.
+
+### 🟡 2:00 PM — Meal 2: The Powerhouse Oatmeal (The Afternoon Anchor)
+* **The Plate:**
+    * 1/2 cup uncooked steel-cut oats (cooked in water)
+    * 30g ground flax meal (added after cooling)
+    * 30g raw walnuts (added after cooling)
+    * 40g pitted prunes (approx. 4–5 pieces)
+* **Audited Metrics:** **~750 Calories** *(92g Carbs, 22g Protein, 37g Fat, ~22g Fiber)*
+* **Purpose:** Establishes a slow-releasing wall of whole-food beta-glucans and healthy fats to provide sustained energy for your 4:00 PM walk or heavy ruck, preventing muscle catabolism.
+
+### 🔴 06:30 PM — Meal 3: The Diverse Legume Dinner (Window Closer)
+* **The Protocol:** Take **Berberine** immediately before your first bite.
+* **The Plate:**
+    * 1/2 cup uncooked French green lentils or black beans (cooked)
+    * **1 tbsp Extra Virgin Olive Oil (EVOO)** folded directly into the warm lentils
+    * 2 cups mixed cruciferous and allium vegetables (broccoli, Brussels sprouts, sliced onions, and minced garlic) sautéed in water or veggie broth
+* **Audited Metrics:** **~540 Calories** *(68g Carbs, 26g Protein, 16g Fat, ~20g Fiber)*
+* **Purpose:** Provides a warm, savory, and socially normal dinner. EVOO enhances berberine absorption. Berberine activates AMPK to clear the carbohydrate load, ensuring flat glucose levels as you transition into your 16-hour overnight fast.
 
 ### 📊 Daily Totals Summary
 * **True Daily Energy Intake:** **~1,650 Calories**
