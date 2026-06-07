@@ -80,9 +80,7 @@ def make_client() -> Garmin:
     if not email or not password:
         sys.exit("Set GARMIN_EMAIL and GARMIN_PASSWORD or fill the prompt.")
 
-    # prompt_mfa is called only if your account has multi-factor auth enabled.
-    client = Garmin(email=email, password=password,
-                    prompt_mfa=lambda: input("MFA code: ").strip())
+    client = Garmin(email=email, password=password)
     client.login()
     try:
         client.garth.dump(TOKENSTORE)  # cache for next time
