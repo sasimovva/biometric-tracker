@@ -15,7 +15,7 @@
     * **Objective:** Deep cellular autophagy, visceral fat reduction, and absolute insulin reset.
     * **Fast-State parkrun:** Executed in the final hours of the fast to deplete residual glycogen and maximize fat oxidation.
 * **The "Smart-Cook" Rule:** Steel-cut oats pressure-cooked in water. Flax meal, raw walnuts, and prunes added *after* cooling below 140°F to prevent oxidation.
-* **Prebiotic & Probiotic Guardrails:** Consolidate prebiotic targets into the cold 11:00 AM Mega-Smoothie. *Critical Temperature Rule: Always keep the smoothie base cold. If raw potato starch is exposed to liquids hotter than 130°F, it gelatinizes into a fast-digesting carb, erasing all visceral fat-burning and prebiotic properties.*
+* **Prebiotic & Probiotic Guardrails:** Consolidate prebiotic targets into the cold 4:00 PM Greens Smoothie. *Critical Temperature Rule: Always keep the smoothie base cold. If raw potato starch is exposed to liquids hotter than 130°F, it gelatinizes into a fast-digesting carb, erasing all visceral fat-burning and prebiotic properties.*
 * **Hydration & Electrolytes:** 3.5 Liters daily minimum (critical for processing 59g daily fiber, 40g RS2, and 5g creatine). *During the 36-hour fast: Supplement with pure sodium and magnesium, avoiding added potassium due to 25mg Losartan potassium-retention properties.*
 
 ---
@@ -28,37 +28,36 @@
     * **Aged Garlic:** Plaque reversal support, blood pressure regulation, and microcirculatory optimization.
 * **Glycemic & Visceral Fat Reduction:**
     * **Berberine (Daily):** Metformin-mimetic AMPK activator taken *immediately before the first bite* of the 6:30 PM dinner. Sautéing with EVOO dramatically increases berberine's systemic absorption.
-    * **Unmodified Potato Starch (RS2):** 40g raw potato starch (approx. 2.5 to 3 level tablespoons) daily in the 11:00 AM Mega-Smoothie to promote gut butyrate production, reduce visceral fat, and stabilize sleep glucose.
-    * **Inulin Powder (5g):** Daily prebiotic soluble fiber in the Mega-Smoothie to selectively feed beneficial bifidobacteria.
+    * **Unmodified Potato Starch (RS2):** 40g raw potato starch (approx. 2.5 to 3 level tablespoons) daily in the 4:00 PM Greens Smoothie to promote gut butyrate production, reduce visceral fat, and stabilize sleep glucose.
+    * **Inulin Powder (5g):** Daily prebiotic soluble fiber in the Greens Smoothie to selectively feed beneficial bifidobacteria.
     * **Pendulum Glucose Control Probiotic (Considering):** Targeted gut microbiome strains to stimulate natural butyrate production, manage post-meal glucose spikes, and support A1C management.
 * **Lipid Management & Longevity:**
     * **Niacin:** Primary lipid-suppression supplement targeting Lp(a) suppression and cholesterol optimization.
 * **Cellular Energy & Recovery:**
-    * **Creatine (5g Daily):** Taken daily in the 11:00 AM Mega-Smoothie for muscle energy, recovery, and direct gut barrier support. *Safety Rule: Stop all creatine intake 72 hours prior to any CMP blood draws to avoid an artificial eGFR drop.*
+    * **Creatine (5g Daily):** Taken daily in the 4:00 PM Greens Smoothie for muscle energy, recovery, and direct gut barrier support. *Safety Rule: Stop all creatine intake 72 hours prior to any CMP blood draws to avoid an artificial eGFR drop.*
 
 ---
 
 ## 4. The Master Menu & Timeline (Next 8 Weeks)
 
-### 🟢 11:00 AM — Meal 1: The "Mega-Smoothie" (Open the Window)
-* **The Shaker:** Blend the following into **20–24 oz** of **cold** water and ice:
-    * 1 scoop premium Protein Powder (Lean Whey Isolate or clean plant blend)
-    * **40 grams RS2 (Raw Potato Starch)** — *approx. 2.5 to 3 level tablespoons*
-    * **5 grams Inulin Powder** — *approx. 1 level teaspoon*
-    * **5 grams Creatine Monohydrate** — *approx. 1 level teaspoon*
-    * 2 tbsp Raw, Non-Alkalized Cacao Powder
-    * 1 tsp High-Quality Matcha Powder
-* **Audited Metrics:** **~360 Calories** *(54g Carbs, 32.5g Protein, 6.5g Fat, ~17g Fiber)*
-* **Purpose:** Opens your feeding window with a massive delivery of prebiotics, cellular protein, and antioxidants. Consuming this after morning fasted cardio/intervals accelerates recovery and supports gut barrier integrity.
-
-### 🟡 2:00 PM — Meal 2: The Powerhouse Oatmeal (The Afternoon Anchor)
+### 🟢 11:00 AM — Meal 1: The Powerhouse Oatmeal (Open the Window)
 * **The Plate:**
     * 1/2 cup uncooked steel-cut oats (cooked in water)
     * 30g ground flax meal (added after cooling)
     * 30g raw walnuts (added after cooling)
     * 40g pitted prunes (approx. 4–5 pieces)
 * **Audited Metrics:** **~750 Calories** *(92g Carbs, 22g Protein, 37g Fat, ~22g Fiber)*
-* **Purpose:** Establishes a slow-releasing wall of whole-food beta-glucans and healthy fats to provide sustained energy for your 4:00 PM walk or heavy ruck, preventing muscle catabolism.
+* **Purpose:** Opens your feeding window with a slow-releasing wall of whole-food beta-glucans and healthy fats to trigger early-day upper GI satiety and fuel your native butyrate-producing bacteria.
+
+### 🟡 04:00 PM — Meal 2: The "Greens Smoothie" (The Afternoon Anchor)
+* **The Shaker:** Blend the following into **20–24 oz** of **cold** water and ice:
+    * 1 scoop premium Protein Powder (Lean Whey Isolate or clean plant blend)
+    * **40 grams RS2 (Raw Potato Starch)** — *approx. 2.5 to 3 level tablespoons*
+    * **5 grams Inulin Powder** — *approx. 1 level teaspoon*
+    * **5 grams Creatine Monohydrate** — *approx. 1 level teaspoon*
+    * 1-2 cups Fresh Organic Greens (Spinach, Kale, or organic greens powder)
+* **Audited Metrics:** **~360 Calories** *(54g Carbs, 32.5g Protein, 6.5g Fat, ~17g Fiber)*
+* **Purpose:** Consolidates your heavy-dose prebiotic targets, creatine, and protein into a cold, muscle-preserving liquid delivery system. Taking this mid-afternoon provides amino acids for muscle recovery and flags hunger before dinner.
 
 ### 🔴 06:30 PM — Meal 3: The Diverse Legume Dinner (Window Closer)
 * **The Protocol:** Take **Berberine** immediately before your first bite.
