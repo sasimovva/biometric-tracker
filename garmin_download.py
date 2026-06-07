@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# /// script
+# dependencies = [
+#   "garminconnect",
+# ]
+# ///
 """
 Download your recent Garmin Connect activities to local disk using the official API OAuth flow.
 
@@ -10,14 +15,16 @@ Cloudflare, and exposes a direct download endpoint. Far more robust.
 Setup
 -----
     pip install garminconnect
+    # Alternatively, if you have 'uv' installed, no setup is required!
 
     export GARMIN_EMAIL="you@example.com"
     export GARMIN_PASSWORD="your-password"
 
 Run
 ---
-    python3 garmin_download.py                 # last 20 activities, .fit
-    python3 garmin_download.py --count 50 --format TCX --out ./activities
+    python3 garmin_download.py                 # Using standard python
+    uv run garmin_download.py                  # Using uv (auto-manages dependencies)
+    uv run garmin_download.py --count 50 --format TCX --out ./activities
 
 Notes
 -----
