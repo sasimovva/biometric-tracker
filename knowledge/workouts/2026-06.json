@@ -79,5 +79,61 @@
     "intensity_minutes": 47,
     "body_battery_impact": -11,
     "notes": "Norwegian 4x4 intervals session on treadmill. Cardiorespiratory endurance focus."
+  },
+  {
+    "date": "2026-06-06",
+    "day_of_week": "Saturday",
+    "activity_type": "Rucking",
+    "title": "Endurance Rucking",
+    "start_time": "09:00:00",
+    "distance_miles": 4.67,
+    "duration": "01:25:25",
+    "avg_pace": "18:16",
+    "calories_burned": 584,
+    "active_calories": 461,
+    "resting_calories": 123,
+    "avg_hr": 111,
+    "max_hr": 133,
+    "elevation_gain_ft": 56,
+    "elevation_loss_ft": 52,
+    "steps": 9672,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 2.6,
+      "anaerobic": 0.0,
+      "load": 40
+    },
+    "intensity_minutes": 83,
+    "body_battery_impact": -11,
+    "pack_weight_lbs": 30,
+    "notes": "Fasted morning ruck to complete 36-hour extended fast. 30 lbs load. Maintained strict low-aerobic Zone 2 cardiovascular effort."
+  },
+  {
+    "date": "2026-06-07",
+    "day_of_week": "Sunday",
+    "activity_type": "Rucking",
+    "title": "Endurance Rucking",
+    "start_time": "10:00:00",
+    "distance_miles": 7.13,
+    "duration": "02:06:22",
+    "avg_pace": "17:44",
+    "calories_burned": 903,
+    "active_calories": 720,
+    "resting_calories": 183,
+    "avg_hr": 126,
+    "max_hr": 143,
+    "elevation_gain_ft": 75,
+    "elevation_loss_ft": 66,
+    "steps": 14346,
+    "training_effect": {
+      "primary": "Base (Low Aerobic)",
+      "aerobic": 3.3,
+      "anaerobic": 0.0,
+      "load": 63
+    },
+    "intensity_minutes": 127,
+    "body_battery_impact": -23,
+    "pack_weight_lbs": 30,
+    "notes": "Sunday endurance weighted ruck with 30 lbs load. Completed 7.13 miles, maintaining stable Zone 2 aerobic base stimulus."
   }
 ]

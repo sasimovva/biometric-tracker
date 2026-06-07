@@ -92,3 +92,20 @@ Walking keeps your stress hormones (cortisol) completely low while operating ent
 
 ### ☕ 5. Non-Breaking Fast Aids
 If you ever experience psychological evening cravings during the fast, a hot cup of plain **Hibiscus tea** or **Yerba Mate** is completely zero-calorie and will stimulate localized gut satiety without breaking your fast.
+
+---
+
+## 6. TRF Troubleshooting & Weight Fluctuations
+* **Scale Weight Illusion (Creatine & Fiber Water Retention):**
+    * Taking 5g of creatine daily pulls water directly into muscle cells, causing an initial scale increase of 3 to 5 lbs.
+    * Consuming 59g of fiber (including 40g of RS2 prebiotic starch and 5g of inulin) binds significant water in the GI tract.
+    * *Action:* Focus on belt loops, waist measurements, and clothing fit rather than daily scale weight to track true fat loss.
+* **Window Shifting to Reduce the Hunger Gap:**
+    * If an early window leads to late-night hunger, shift the eating window later in the day (e.g., 11:00 AM – 7:00 PM or 12:00 PM – 8:00 PM) to reduce the fasting hunger gap before bedtime.
+* **Fasting Bridges in the Evening:**
+    * Use a hot cup of plain Hibiscus tea or Yerba Mate (zero-calorie) to expand the stomach, trigger stretch receptors, and stimulate gut GLP-1 release via bitter plant compounds to suppress evening cravings.
+* **Portion Auditing to Prevent Calorie Creep:**
+    * Subconscious overcompensation in fats can erase a metabolic deficit. Always measure olive oil precisely (1 tbsp = 120 kcal) and weigh walnuts (30g = ~14 halves) instead of eyeballing.
+* **Berberine Satiety Staking:**
+    * Take Berberine strictly 1 to 2 minutes *before* your first bite of carbohydrate-heavy meals (like the legume dinner/lunch). This activates AMPK to smooth glucose clearance and minimize post-meal insulin dips that trigger cravings.
+
