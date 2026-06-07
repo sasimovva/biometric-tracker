@@ -16,8 +16,8 @@ Setup
 
 Run
 ---
-    python3 download_garmin_fit.py                 # last 20 activities, .fit
-    python3 download_garmin_fit.py --count 50 --format TCX --out ./activities
+    python3 garmin_download.py                 # last 20 activities, .fit
+    python3 garmin_download.py --count 50 --format TCX --out ./activities
 
 Notes
 -----
