@@ -1,8 +1,27 @@
-import os
+"""LLM extraction + querying for the biometric tracker.
+
+Text (logging, intent classification, question answering) runs on a LOCAL model
+via Ollama (default Qwen2.5 14B) for speed, privacy, and zero cost — with an
+automatic fallback to Claude Haiku if Ollama is unreachable. Image/vision
+parsing always uses Claude Haiku via the Anthropic SDK (needs a vision model).
+
+API key (ANTHROPIC_API_KEY) comes from the shared sops secrets via secrets_loader.
+"""
 import json
+import os
 import re
 import urllib.request
 import urllib.error
+
+import anthropic
+
+# --- Vision / Anthropic fallback model ---
+ANTHROPIC_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5")
+MAX_TOKENS = 1024
+
+# --- Local text model (Ollama, OpenAI-compatible endpoint) ---
+OLLAMA_BASE = os.getenv("OLLAMA_BASE", "http://localhost:11434/v1").rstrip("/")
+TEXT_LLM_MODEL = os.getenv("TEXT_LLM_MODEL", "qwen2.5:14b")
 
 # System prompt forcing structured JSON outputs
 SYSTEM_PROMPT = """You are a precision data-extraction assistant. Your job is to extract biometric and habit data from the user's free-form chat message and output it in STRICT JSON format.
@@ -47,114 +66,175 @@ Rules for extraction:
 4. If the user mentions fasting or TRF state (e.g. 'struggling with TRF', 'started fast', 'completed 36h fast'), log it in 'trf_status'.
 """
 
-def parse_user_input(text):
-    api_base = os.getenv("LLM_API_BASE", "http://localhost:11434/v1").rstrip("/")
-    model = os.getenv("LLM_MODEL", "llama3")
-    api_key = os.getenv("LLM_API_KEY", "unused")
+INTENT_PROMPT = """You classify a fitness chat message as one of two intents.
 
-    url = f"{api_base}/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "finished a 36h fast").
+- "query": the user is ASKING a question about their existing data (e.g. "show me my recent run", "how many miles this week", "what was my longest hike", "what's my average heart rate").
 
-    # Build the OpenAI-compatible request payload
+Respond with a single JSON object only: {"intent": "log"} or {"intent": "query"}."""
+
+QUERY_PROMPT = """You are a helpful fitness assistant answering questions about the user's workout history.
+
+You are given the user's recent workouts as JSON. Answer the user's question using ONLY this data. Be concise and friendly. Use the units in the data (miles, bpm, etc.). If the data does not contain the answer, say so plainly. Do not invent numbers.
+
+Recent workouts (most recent first):
+{context}
+"""
+
+_client = None
+
+
+def _get_client():
+    """Lazily build the Anthropic client (key is set by secrets_loader at runtime)."""
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic()
+    return _client
+
+
+# ---------------------------------------------------------------------------
+# Text backend: local Ollama first, Anthropic Haiku as fallback
+# ---------------------------------------------------------------------------
+
+def _ollama_chat(system, user_text, want_json):
+    """Call the local Ollama model via its OpenAI-compatible endpoint."""
     payload = {
-        "model": model,
+        "model": TEXT_LLM_MODEL,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Parse this message: '{text}'"}
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_text},
         ],
-        "temperature": 0.1
+        "temperature": 0.1,
     }
+    if want_json:
+        payload["response_format"] = {"type": "json_object"}
 
-    return _send_request(url, headers, payload)
+    req = urllib.request.Request(
+        f"{OLLAMA_BASE}/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": "Bearer ollama"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=90) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return data["choices"][0]["message"]["content"].strip()
+
+
+def _anthropic_chat(system, user_text):
+    """Fallback text call to Claude Haiku."""
+    response = _get_client().messages.create(
+        model=ANTHROPIC_MODEL,
+        max_tokens=MAX_TOKENS,
+        system=system,
+        messages=[{"role": "user", "content": user_text}],
+    )
+    return next((b.text for b in response.content if b.type == "text"), "")
+
+
+def _text_chat(system, user_text, want_json=True):
+    """Run a text completion locally (Ollama) with Anthropic fallback."""
+    try:
+        content = _ollama_chat(system, user_text, want_json)
+        print(f"🖥️  Local LLM ({TEXT_LLM_MODEL}) responded.")
+        return content
+    except (urllib.error.URLError, urllib.error.HTTPError, KeyError, TimeoutError) as e:
+        print(f"⚠️  Local LLM unavailable ({e}); falling back to Claude {ANTHROPIC_MODEL}.")
+        return _anthropic_chat(system, user_text)
+
+
+def _extract_json(content):
+    """Pull a JSON object out of a model's text response."""
+    cleaned = content.strip()
+    match = re.search(r"```(?:json)?\s*(.*?)\s*```", cleaned, re.DOTALL)
+    if match:
+        cleaned = match.group(1).strip()
+    if not (cleaned.startswith("{") and cleaned.endswith("}")):
+        json_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
+        if json_match:
+            cleaned = json_match.group(1)
+    return json.loads(cleaned)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def classify_intent(text):
+    """Return 'log' or 'query' for a free-text message. Defaults to 'log'."""
+    try:
+        result = _extract_json(_text_chat(INTENT_PROMPT, text, want_json=True))
+        return "query" if result.get("intent") == "query" else "log"
+    except Exception as e:
+        print(f"⚠️  Intent classification failed ({e}); defaulting to 'log'.")
+        return "log"
+
+
+def answer_query(text, workouts_json):
+    """Answer a natural-language question using the recent-workouts JSON context."""
+    system = QUERY_PROMPT.format(context=workouts_json)
+    try:
+        return _text_chat(system, text, want_json=False).strip()
+    except Exception as e:
+        return f"⚠️ Couldn't answer that right now: {e}"
+
+
+def parse_user_input(text):
+    """Extract structured data from a free-form text message (logging)."""
+    try:
+        return _extract_json(_text_chat(SYSTEM_PROMPT, f"Parse this message: '{text}'", want_json=True))
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse JSON from LLM: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ Unexpected error in text parsing: {e}")
+        return None
+
 
 def parse_image_input(image_base64, mime_type, text_prompt=None):
-    api_base = os.getenv("LLM_API_BASE", "http://localhost:11434/v1").rstrip("/")
-    model = os.getenv("LLM_MODEL", "llama3-vision") # Typically a vision model locally or public
-    api_key = os.getenv("LLM_API_KEY", "unused")
-
-    url = f"{api_base}/chat/completions"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    user_text = "Identify and extract all fitness, workout, or biometric numbers from this screenshot. "
+    """Extract structured data from a workout/biometric screenshot (Claude vision)."""
+    user_text = (
+        "Identify and extract all fitness, workout, or biometric numbers from "
+        "this screenshot. "
+    )
     if text_prompt:
         user_text += f"Also incorporate this context: '{text_prompt}'"
 
-    # Build the standard OpenAI-compatible vision payload
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
+    print(f"🔗 Sending image to Claude ({ANTHROPIC_MODEL})...")
+    try:
+        response = _get_client().messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM_PROMPT,
+            messages=[{
                 "role": "user",
                 "content": [
                     {"type": "text", "text": user_text},
                     {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{mime_type};base64,{image_base64}"
-                        }
-                    }
-                ]
-            }
-        ],
-        "temperature": 0.1
-    }
-
-    return _send_request(url, headers, payload)
-
-def _send_request(url, headers, payload):
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
-
-    print(f"🔗 Sending request to LLM at {url} using model '{payload['model']}'...")
-    try:
-        with urllib.request.urlopen(req, timeout=45) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            content = res_data["choices"][0]["message"]["content"].strip()
-            
-            print(f"🤖 LLM Raw Response:\n{content}\n")
-            
-            # Clean up the output in case the LLM returned markdown code blocks
-            cleaned = content
-            match = re.search(r"```(?:json)?\s*(.*?)\s*```", content, re.DOTALL)
-            if match:
-                cleaned = match.group(1)
-            
-            # Additional safety: extract first matching JSON object
-            cleaned = cleaned.strip()
-            if not (cleaned.startswith("{") and cleaned.endswith("}")):
-                json_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
-                if json_match:
-                    cleaned = json_match.group(1)
-
-            parsed = json.loads(cleaned)
-            return parsed
-
-    except urllib.error.URLError as e:
-        print(f"❌ LLM API connection error: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        print(f"❌ Failed to parse JSON response from LLM: {e}")
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": mime_type, "data": image_base64},
+                    },
+                ],
+            }],
+        )
+        content = next((b.text for b in response.content if b.type == "text"), "")
+        print(f"🤖 LLM Raw Response:\n{content}\n")
+        return _extract_json(content)
+    except anthropic.APIError as e:
+        print(f"❌ Anthropic API error: {e}")
         return None
     except Exception as e:
-        print(f"❌ Unexpected error in LLM parsing: {e}")
+        print(f"❌ Unexpected error in image parsing: {e}")
         return None
+
 
 # Quick local test module
 if __name__ == "__main__":
-    # Test with dummy configs if env is empty
-    os.environ["LLM_API_BASE"] = os.getenv("LLM_API_BASE", "https://generativelanguage.googleapis.com/v1beta/openai")
-    os.environ["LLM_MODEL"] = os.getenv("LLM_MODEL", "gemini-1.5-flash")
-    # For testing, you must supply your own GEMINI_API_KEY or OpenAI key if not running locally.
-    
-    test_text = "My weight is 185.6. Did a 4 mile ruck carrying 20 lbs in 1 hour. Heart rate was around 120. Took my 1 tbsp potato starch."
-    print(f"📝 Test Input: {test_text}")
-    res = parse_user_input(test_text)
-    print(f"✨ Parsed Result:\n{json.dumps(res, indent=2)}")
+    from secrets_loader import load_shared_secrets
+    load_shared_secrets()
 
+    for t in [
+        "My weight is 185.6. Did a 4 mile ruck with 20 lbs in 1 hour. HR ~120. Took 1 tbsp potato starch.",
+        "show me my recent run",
+        "how many total miles have I logged?",
+    ]:
+        print(f"\n📝 {t!r}  ->  intent: {classify_intent(t)}")

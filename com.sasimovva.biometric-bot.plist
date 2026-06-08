@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sasimovva.biometric-bot</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>SOPS_AGE_KEY_FILE</key>
+        <string>/Users/sasimovva/Library/Application Support/sops/age/keys.txt</string>
+    </dict>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sasimovva/Projects/biometric-tracker/venv/bin/python</string>
+        <string>/Users/sasimovva/Projects/biometric-tracker/telegram_bot.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/sasimovva/Projects/biometric-tracker</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/biometric-bot.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/biometric-bot.log</string>
+    <!-- Always-on daemon: start on load/reboot, restart on exit -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>

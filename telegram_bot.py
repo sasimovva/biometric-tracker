@@ -10,17 +10,25 @@ import os
 import sys
 import json
 import base64
+import subprocess
 from datetime import datetime, date
 import telebot
-from llm_parser import parse_user_input, parse_image_input
+from llm_parser import parse_user_input, parse_image_input, classify_intent, answer_query
 from import_garmin import update_workout_database, update_markdown_dashboard
+from query_workouts import load_workouts
 
-# Load local environment config if .env exists (fallback for manual testing)
+# Load local environment config if .env exists (fallback / overrides)
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+
+# Reuse the shared, sops-encrypted API keys from the ~/Code monorepo
+# (TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY, OPENROUTER_API_KEY, ...). Anything
+# already set via the real environment or .env above takes precedence.
+from secrets_loader import load_shared_secrets
+load_shared_secrets()
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ALLOWED_USER_ID = os.getenv("ALLOWED_USER_ID")
@@ -149,6 +157,14 @@ def get_aggregate_stats():
     )
     return report
 
+# Recent workouts as a JSON context blob for natural-language questions
+def get_recent_workouts_json(limit=20):
+    try:
+        workouts = load_workouts()  # already sorted most-recent-first
+    except Exception:
+        workouts = []
+    return json.dumps(workouts[:limit], indent=2, default=str)
+
 # Telegram Bot Handlers
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
@@ -161,11 +177,16 @@ def send_welcome(message):
         "Send me natural language updates or Garmin workout screenshots to log your data!\n\n"
         "*Commands:*\n"
         "/stats - Get your aggregate workout stats\n"
+        "/sync - Commit & sync data with GitHub (pull + push)\n"
         "/help - Display this help manual\n\n"
-        "*Free-form examples:*\n"
+        "*Log data (free-form):*\n"
         "• _'My weight is 185.2 today'_\n"
         "• _'Just completed 18h fast and took 20g potato starch'_\n"
-        "• _'Completed 3.5 mile ruck with 30 lbs in 55 mins'_"
+        "• _'Completed 3.5 mile ruck with 30 lbs in 55 mins'_\n\n"
+        "*Ask questions (free-form):*\n"
+        "• _'Show me my recent run'_\n"
+        "• _'How many total miles have I logged?'_\n"
+        "• _'What was my longest hike?'_"
     )
     bot.reply_to(message, help_text, parse_mode="Markdown")
 
@@ -177,6 +198,50 @@ def send_stats(message):
     stats_msg = get_aggregate_stats()
     bot.reply_to(message, stats_msg, parse_mode="Markdown")
 
+# Sync logged data with GitHub: commit local changes, pull, then push
+def git_sync():
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+
+    def run(args):
+        proc = subprocess.run(
+            ["git", "-C", repo_dir] + args,
+            capture_output=True, text=True, timeout=120,
+        )
+        return proc.returncode, (proc.stdout + proc.stderr).strip()
+
+    steps = []
+
+    # Stage and commit anything new (dashboards, workouts, etc.)
+    run(["add", "-A"])
+    _, status = run(["status", "--porcelain"])
+    if status:
+        msg = f"Sync from Telegram bot {datetime.now():%Y-%m-%d %H:%M}"
+        rc, out = run(["commit", "-m", msg])
+        steps.append("📝 Committed local changes" if rc == 0 else f"⚠️ Commit: {out}")
+    else:
+        steps.append("✓ Nothing new to commit")
+
+    # Pull (rebase, autostash) then push
+    rc, out = run(["pull", "--rebase", "--autostash"])
+    steps.append("⬇️ Pulled latest" if rc == 0 else f"❌ Pull failed:\n{out}")
+    if rc == 0:
+        rc, out = run(["push"])
+        steps.append("⬆️ Pushed to GitHub" if rc == 0 else f"❌ Push failed:\n{out}")
+
+    return "🔄 *Git Sync*\n" + "\n".join(f"• {s}" for s in steps)
+
+@bot.message_handler(commands=['sync'])
+def sync_repo(message):
+    if not is_allowed_user(message):
+        bot.reply_to(message, "🔒 Access denied.")
+        return
+    bot.send_chat_action(message.chat.id, 'typing')
+    try:
+        result = git_sync()
+    except Exception as e:
+        result = f"❌ Sync error: {e}"
+    bot.reply_to(message, result, parse_mode="Markdown")
+
 # Handle free text messages
 @bot.message_handler(content_types=['text'])
 def handle_text_updates(message):
@@ -186,7 +251,13 @@ def handle_text_updates(message):
 
     bot.send_chat_action(message.chat.id, 'typing')
     text = message.text
-    
+
+    # Route by intent: is the user asking about their data, or logging new data?
+    if classify_intent(text) == "query":
+        answer = answer_query(text, get_recent_workouts_json())
+        bot.reply_to(message, answer)
+        return
+
     parsed = parse_user_input(text)
     if not parsed:
         bot.reply_to(message, "⚠️ Failed to parse details. Please check model status or endpoint availability.")
@@ -271,4 +342,8 @@ def process_parsed_payload(message, parsed):
 
 if __name__ == "__main__":
     print(f"🤖 Starting Precision Tracker Bot (User Gate: {ALLOWED_USER_ID or 'DISABLED'})...")
+    # The bot token is shared with the ~/Code Orchestrator, which uses a webhook.
+    # A token can't serve a webhook and long-polling at once, so drop any existing
+    # webhook before polling. (Orchestrator re-registers its webhook when it starts.)
+    bot.remove_webhook()
     bot.infinity_polling()
