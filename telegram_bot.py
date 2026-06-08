@@ -45,6 +45,39 @@ def is_allowed_user(message):
         return True
     return str(message.from_user.id) == str(ALLOWED_USER_ID)
 
+# Ensure the monthly dashboard has a table row for the given date.
+# The metric/movement updaters only fill EXISTING rows, so a new day (or week)
+# would otherwise silently fail to log. This appends an empty row when missing.
+def ensure_day_row(act_date):
+    md_path = os.path.join(os.path.dirname(__file__), 'dashboards', f"{act_date[:7]}.md")
+    if not os.path.exists(md_path):
+        return False  # whole-month sheet missing; don't fabricate it here
+
+    dt = datetime.strptime(act_date, "%Y-%m-%d")
+    day_abbr = dt.strftime("%A")[:3]
+    date_str = f"{dt.strftime('%b')} {dt.day}"
+
+    with open(md_path) as f:
+        lines = f.readlines()
+
+    # Already has a row for this day?
+    for line in lines:
+        if f"**{day_abbr}**" in line and date_str in line:
+            return True
+
+    # Append after the last existing table data row (lines like "| **Mon** | ...").
+    last_idx = None
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("| **"):
+            last_idx = i
+    if last_idx is None:
+        return False
+
+    lines.insert(last_idx + 1, f"| **{day_abbr}** | {date_str} | | | | | |\n")
+    with open(md_path, 'w') as f:
+        f.writelines(lines)
+    return True
+
 # Dynamic metrics updater for dashboards
 def update_metrics_in_dashboard(weight_lbs, trf_status, rs2_dose, act_date):
     year_month = act_date[:7]
@@ -157,13 +190,23 @@ def get_aggregate_stats():
     )
     return report
 
-# Recent workouts as a JSON context blob for natural-language questions
-def get_recent_workouts_json(limit=20):
+# Recent workouts as a compact, one-line-per-workout context for NL questions.
+# Compact (vs full JSON) keeps the prompt small so the local model answers fast.
+def get_recent_workouts_context(limit=15):
     try:
         workouts = load_workouts()  # already sorted most-recent-first
     except Exception:
         workouts = []
-    return json.dumps(workouts[:limit], indent=2, default=str)
+    lines = []
+    for w in workouts[:limit]:
+        lines.append(
+            f"{w.get('date','?')} {w.get('day_of_week','')[:3]} | "
+            f"{w.get('activity_type','?')} | {w.get('distance_miles',0)}mi | "
+            f"{w.get('duration','?')} | pace {w.get('avg_pace','?')}/mi | "
+            f"{w.get('avg_hr',0)}bpm | {w.get('steps',0)} steps | "
+            f"{w.get('calories_burned',0)}kcal"
+        )
+    return "\n".join(lines) if lines else "(no workouts logged yet)"
 
 # Telegram Bot Handlers
 @bot.message_handler(commands=['start', 'help'])
@@ -230,6 +273,32 @@ def git_sync():
 
     return "🔄 *Git Sync*\n" + "\n".join(f"• {s}" for s in steps)
 
+# Compact auto-sync used after every write (commit + pull + push). Returns a
+# one-line status to append to the user's reply.
+def git_autosync():
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+
+    def run(args):
+        p = subprocess.run(
+            ["git", "-C", repo_dir] + args,
+            capture_output=True, text=True, timeout=120,
+        )
+        return p.returncode, (p.stdout + p.stderr).strip()
+
+    try:
+        run(["add", "-A"])
+        _, status = run(["status", "--porcelain"])
+        if not status:
+            return "✓ Nothing new to sync"
+        run(["commit", "-m", f"Log via Telegram {datetime.now():%Y-%m-%d %H:%M}"])
+        rc, _ = run(["pull", "--rebase", "--autostash"])
+        if rc != 0:
+            return "⚠️ Saved locally; GitHub pull failed"
+        rc, _ = run(["push"])
+        return "🔄 Synced to GitHub" if rc == 0 else "⚠️ Saved locally; push failed"
+    except Exception as e:
+        return f"⚠️ Saved locally; sync error: {e}"
+
 @bot.message_handler(commands=['sync'])
 def sync_repo(message):
     if not is_allowed_user(message):
@@ -251,10 +320,12 @@ def handle_text_updates(message):
 
     bot.send_chat_action(message.chat.id, 'typing')
     text = message.text
+    print(f"📩 IN  (user {message.from_user.id}): {text!r}")
 
     # Route by intent: is the user asking about their data, or logging new data?
     if classify_intent(text) == "query":
-        answer = answer_query(text, get_recent_workouts_json())
+        answer = answer_query(text, get_recent_workouts_context())
+        print(f"📤 OUT (query): {answer!r}")
         bot.reply_to(message, answer)
         return
 
@@ -273,7 +344,8 @@ def handle_image_updates(message):
         return
 
     bot.send_chat_action(message.chat.id, 'typing')
-    
+    print(f"📩 IN  (user {message.from_user.id}): [photo]" + (f" caption={message.caption!r}" if message.caption else ""))
+
     try:
         # Get the largest photo size
         file_id = message.photo[-1].file_id
@@ -302,7 +374,10 @@ def process_parsed_payload(message, parsed):
     # If a workout date was extracted, default to it
     if parsed.get("workout") and parsed["workout"].get("date"):
         act_date = parsed["workout"]["date"]
-        
+
+    # Make sure today's (or the workout's) row exists before we try to fill it
+    ensure_day_row(act_date)
+
     responses = []
     
     # 1. Update Weight, TRF, or RS2
@@ -337,7 +412,11 @@ def process_parsed_payload(message, parsed):
     if not responses:
         responses.append("🤷 I processed your message but couldn't extract any new metrics matching the protocol baseline.")
         
+    # Persist the write to GitHub so data isn't stranded locally
+    responses.append(git_autosync())
+
     reply_text = "\n\n".join(responses)
+    print(f"📤 OUT (log): {reply_text!r}")
     bot.reply_to(message, reply_text, parse_mode="Markdown")
 
 if __name__ == "__main__":

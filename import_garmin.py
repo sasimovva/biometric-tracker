@@ -5,55 +5,11 @@ import json
 import argparse
 from datetime import datetime, date, timedelta
 
-# Try to import garminconnect, explain how to install if missing
-try:
-    from garminconnect import Garmin
-except ImportError:
-    print("\n❌ Error: The 'garminconnect' package is not installed.")
-    print("👉 Please install it by running: pip install garminconnect\n")
-    sys.exit(1)
+# Shared, cached-token Garmin authentication (see garmin_client.py).
+from garmin_client import make_client
 
 WORKOUTS_DIR = os.path.join(os.path.dirname(__file__), 'knowledge', 'workouts')
 DASHBOARDS_DIR = os.path.join(os.path.dirname(__file__), 'dashboards')
-
-def get_credentials():
-    email = os.getenv("GARMIN_EMAIL")
-    password = os.getenv("GARMIN_PASSWORD")
-    
-    if not email or not password:
-        print("\n🔑 Garmin Connect Credentials Required")
-        print("--------------------------------------")
-        print("To run this script seamlessly, you can set the following environment variables:")
-        print("  export GARMIN_EMAIL='your_email@example.com'")
-        print("  export GARMIN_PASSWORD='your_password'")
-        print("--------------------------------------")
-        
-        if not email:
-            email = input("Email: ").strip()
-        if not password:
-            import getpass
-            password = getpass.getpass("Password: ")
-            
-    if not email or not password:
-        print("❌ Error: Email and password are required to login.")
-        sys.exit(1)
-        
-    return email, password
-
-def init_garmin_client(email, password):
-    token_dir = os.path.expanduser("~/.garminconnect")
-    os.makedirs(token_dir, exist_ok=True)
-    
-    print("🔄 Authenticating with Garmin Connect...")
-    try:
-        # Session tokens are cached to avoid repeated login attempts (which triggers MFA)
-        client = Garmin(email, password)
-        client.login(token_dir)
-        print("✅ Successfully logged in and session loaded!")
-        return client
-    except Exception as e:
-        print(f"❌ Authentication Failed: {e}")
-        sys.exit(1)
 
 def format_duration(seconds):
     if not seconds:
@@ -299,8 +255,7 @@ def main():
     parser.add_argument('--days', type=int, default=1, help="Number of days to sync back (default: 1, which checks today)")
     args = parser.parse_args()
     
-    email, password = get_credentials()
-    client = init_garmin_client(email, password)
+    client = make_client()
     
     # Calculate date range
     today = date.today()

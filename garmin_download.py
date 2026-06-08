@@ -38,7 +38,6 @@ Notes
 """
 
 import argparse
-import os
 import sys
 import zipfile
 from pathlib import Path
@@ -48,7 +47,8 @@ try:
 except ImportError:
     sys.exit("Missing dependency. Run:  pip install garminconnect")
 
-TOKENSTORE = os.path.expanduser(os.getenv("GARMINTOKENS", "~/.garminconnect"))
+# Shared, cached-token Garmin authentication (see garmin_client.py).
+from garmin_client import make_client
 
 FORMATS = {
     "ORIGINAL": Garmin.ActivityDownloadFormat.ORIGINAL,  # .fit (zipped) — full fidelity
@@ -57,37 +57,6 @@ FORMATS = {
     "CSV": Garmin.ActivityDownloadFormat.CSV,
 }
 EXT = {"ORIGINAL": "zip", "TCX": "tcx", "GPX": "gpx", "CSV": "csv"}
-
-
-def make_client() -> Garmin:
-    """Resume a cached session if possible, else log in fresh and cache it."""
-    email = os.getenv("GARMIN_EMAIL")
-    password = os.getenv("GARMIN_PASSWORD")
-
-    # Try the cached token first — no password / MFA needed on repeat runs.
-    try:
-        client = Garmin()
-        client.login(TOKENSTORE)
-        return client
-    except Exception:
-        pass  # fall through to a fresh login
-
-    if not email:
-        email = input("Garmin Email: ").strip()
-    if not password:
-        import getpass
-        password = getpass.getpass("Garmin Password: ")
-
-    if not email or not password:
-        sys.exit("Set GARMIN_EMAIL and GARMIN_PASSWORD or fill the prompt.")
-
-    client = Garmin(email=email, password=password)
-    client.login()
-    try:
-        client.garth.dump(TOKENSTORE)  # cache for next time
-    except Exception:
-        pass  # token caching is a nicety, not required
-    return client
 
 
 def main() -> None:
