@@ -78,20 +78,23 @@ ollama serve            # foreground (or use the launchd agent below for persist
 # Run the Telegram bot (long-polling, foreground)
 venv/bin/python telegram_bot.py
 
-# Reboot persistence — two launchd agents (bot + ollama). Both have RunAtLoad, so
-# they AUTO-START at every login/reboot once the plists are in ~/Library/LaunchAgents.
-# NOTE: `launchctl bootstrap gui/...` must be run from a real Terminal.app session —
-# it fails from non-GUI shells (e.g. inside Claude Code or tmux) with error 125.
-cp com.sasimovva.biometric-bot.plist com.sasimovva.ollama.plist ~/Library/LaunchAgents/
-# Start now without rebooting (run in Terminal.app):
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.sasimovva.ollama.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.sasimovva.biometric-bot.plist
-launchctl list | grep -E "biometric|ollama"     # verify both loaded
-# Stop / restart a service:
-# launchctl bootout   gui/$(id -u)/com.sasimovva.biometric-bot
-# launchctl kickstart -k gui/$(id -u)/com.sasimovva.biometric-bot
-# Only ONE bot poller and ONE ollama may run — stop any manual `telegram_bot.py`
-# / `ollama serve` before bootstrapping (or just reboot).
+# Reboot persistence — this Mac is HEADLESS (SSH-only, no GUI login session), so use
+# LaunchDaemons, NOT LaunchAgents. Agents only load at GUI login (gui/$(id -u) fails
+# with error 125 over SSH and never auto-loads without a console session). Daemons load
+# at BOOT via the system domain. They run as the user (UserName=sasimovva) with HOME/PATH
+# set so ollama models, the sops age key, git/ssh, and the venv all resolve. Needs sudo:
+sudo cp com.sasimovva.ollama.daemon.plist        /Library/LaunchDaemons/com.sasimovva.ollama.plist
+sudo cp com.sasimovva.biometric-bot.daemon.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+sudo chown root:wheel /Library/LaunchDaemons/com.sasimovva.ollama.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+sudo chmod 644        /Library/LaunchDaemons/com.sasimovva.ollama.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.sasimovva.ollama.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+launchctl print system/com.sasimovva.biometric-bot | head   # verify (look for state = running)
+# Stop / restart a service (sudo, system domain):
+# sudo launchctl bootout   system/com.sasimovva.biometric-bot
+# sudo launchctl kickstart -k system/com.sasimovva.biometric-bot
+# Only ONE bot poller / ONE ollama at a time — stop any manual instances first.
+# (com.sasimovva.*.plist without ".daemon" are the GUI-Mac LaunchAgent variants — unused here.)
 
 # Sync the last N days of Garmin workouts (needs GARMIN_EMAIL / GARMIN_PASSWORD)
 venv/bin/python import_garmin.py --days 7
