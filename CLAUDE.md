@@ -78,15 +78,20 @@ ollama serve            # foreground (or use the launchd agent below for persist
 # Run the Telegram bot (long-polling, foreground)
 venv/bin/python telegram_bot.py
 
-# Install as an always-on launchd service (starts on login/reboot, restarts on crash).
-# NOTE: launchctl bootstrap into the gui domain must be run from a real Terminal.app
-# session — it fails from non-GUI shells (e.g. inside Claude Code) with error 125.
-cp com.sasimovva.biometric-bot.plist ~/Library/LaunchAgents/
+# Reboot persistence — two launchd agents (bot + ollama). Both have RunAtLoad, so
+# they AUTO-START at every login/reboot once the plists are in ~/Library/LaunchAgents.
+# NOTE: `launchctl bootstrap gui/...` must be run from a real Terminal.app session —
+# it fails from non-GUI shells (e.g. inside Claude Code or tmux) with error 125.
+cp com.sasimovva.biometric-bot.plist com.sasimovva.ollama.plist ~/Library/LaunchAgents/
+# Start now without rebooting (run in Terminal.app):
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.sasimovva.ollama.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.sasimovva.biometric-bot.plist
-launchctl list | grep biometric          # verify it's loaded
-# Stop / reload:
-# launchctl bootout gui/$(id -u)/com.sasimovva.biometric-bot
+launchctl list | grep -E "biometric|ollama"     # verify both loaded
+# Stop / restart a service:
+# launchctl bootout   gui/$(id -u)/com.sasimovva.biometric-bot
 # launchctl kickstart -k gui/$(id -u)/com.sasimovva.biometric-bot
+# Only ONE bot poller and ONE ollama may run — stop any manual `telegram_bot.py`
+# / `ollama serve` before bootstrapping (or just reboot).
 
 # Sync the last N days of Garmin workouts (needs GARMIN_EMAIL / GARMIN_PASSWORD)
 venv/bin/python import_garmin.py --days 7
