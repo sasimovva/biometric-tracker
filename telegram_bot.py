@@ -45,15 +45,41 @@ def is_allowed_user(message):
         return True
     return str(message.from_user.id) == str(ALLOWED_USER_ID)
 
-# Ensure the monthly dashboard has a table row for the given date.
-# The metric/movement updaters only fill EXISTING rows, so a new day (or week)
-# would otherwise silently fail to log. This appends an empty row when missing.
+# Table header used for both existing and newly-created monthly dashboards.
+# Column order must stay in sync with update_metrics_in_dashboard (Weight/TRF/RS2
+# at indices 3/4/5) and import_garmin.update_markdown_dashboard (Movement at 6).
+DASHBOARD_TABLE_HEADER = (
+    "| Day | Date | Weight (lbs) | TRF Window (11:00A-7:00P) | RS2 Dose | "
+    "3:00 AM CGM Sleep Status | Movement / Steps |\n"
+    "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n"
+)
+
+def _create_month_file(md_path, dt):
+    """Create a fresh monthly dashboard with the standard table + sections."""
+    os.makedirs(os.path.dirname(md_path), exist_ok=True)
+    content = (
+        f"# Precision Habit & Biometric Dashboard ({dt.strftime('%B %Y')})\n\n"
+        + DASHBOARD_TABLE_HEADER
+        + "\n---\n\n"
+        "## 📈 Biometric Flight Recorder (CGM Tracker)\n"
+        "* **Post-Breakfast Glucose Peak (9:00 AM Oats):** Target < 120 mg/dL.\n"
+        "* **Nighttime Glucose Floor (2:00 AM - 4:00 AM):** Target > 80 mg/dL (No dips).\n\n"
+        "## 🚨 Organ Safety Checkpoints\n"
+        "* **Hydration Status:** [ ] Day 1 [ ] Day 2 [ ] Day 3 [ ] Day 4 [ ] Day 5\n"
+    )
+    with open(md_path, 'w') as f:
+        f.write(content)
+
+# Ensure the monthly dashboard exists and has a table row for the given date.
+# Creates the month file if missing, then inserts an empty row for the day so the
+# metric/movement updaters (which only fill EXISTING rows) have something to write.
 def ensure_day_row(act_date):
     md_path = os.path.join(os.path.dirname(__file__), 'dashboards', f"{act_date[:7]}.md")
-    if not os.path.exists(md_path):
-        return False  # whole-month sheet missing; don't fabricate it here
-
     dt = datetime.strptime(act_date, "%Y-%m-%d")
+
+    if not os.path.exists(md_path):
+        _create_month_file(md_path, dt)
+
     day_abbr = dt.strftime("%A")[:3]
     date_str = f"{dt.strftime('%b')} {dt.day}"
 
@@ -65,15 +91,21 @@ def ensure_day_row(act_date):
         if f"**{day_abbr}**" in line and date_str in line:
             return True
 
-    # Append after the last existing table data row (lines like "| **Mon** | ...").
-    last_idx = None
+    # Insert after the last data row ("| **Mon** | ..."), else right after the
+    # table separator line ("| :--- | ...") for a brand-new (empty) table.
+    insert_idx = None
     for i, line in enumerate(lines):
         if line.lstrip().startswith("| **"):
-            last_idx = i
-    if last_idx is None:
+            insert_idx = i
+    if insert_idx is None:
+        for i, line in enumerate(lines):
+            if line.lstrip().startswith("|") and ":---" in line:
+                insert_idx = i
+                break
+    if insert_idx is None:
         return False
 
-    lines.insert(last_idx + 1, f"| **{day_abbr}** | {date_str} | | | | | |\n")
+    lines.insert(insert_idx + 1, f"| **{day_abbr}** | {date_str} | | | | | |\n")
     with open(md_path, 'w') as f:
         f.writelines(lines)
     return True
@@ -135,7 +167,7 @@ def update_metrics_in_dashboard(weight_lbs, trf_status, rs2_dose, act_date):
         try:
             with open(md_path, 'w') as f:
                 f.writelines(new_lines)
-            return True, f"Updated June sheet: {', '.join(changes_logged)}"
+            return True, f"Updated {act_date} dashboard: {', '.join(changes_logged)}"
         except Exception as e:
             return False, f"Failed to write dashboard updates: {e}"
     
