@@ -71,9 +71,9 @@ webhook on startup; the Orchestrator's `telegram_bot.py` was changed to `deleteW
 python3 -m venv venv
 venv/bin/pip install pyTelegramBotAPI python-dotenv garminconnect anthropic
 
-# Local text model (Ollama). Pull once; run the server (or `brew services start ollama`).
+# Local text model (Ollama). Pull once; run the server.
 ollama pull qwen2.5:14b
-ollama serve            # foreground; brew services from a normal terminal for persistence
+ollama serve            # foreground (or use the launchd agent below for persistence)
 
 # Run the Telegram bot (long-polling, foreground)
 venv/bin/python telegram_bot.py
