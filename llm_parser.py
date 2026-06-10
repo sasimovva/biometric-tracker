@@ -1,9 +1,10 @@
 """LLM extraction + querying for the biometric tracker.
 
 Text (logging, intent classification, question answering) runs on a LOCAL model
-via Ollama (default Qwen2.5 14B) for speed, privacy, and zero cost — with an
-automatic fallback to Claude Haiku if Ollama is unreachable. Image/vision
-parsing always uses Claude Haiku via the Anthropic SDK (needs a vision model).
+served by mlx-vlm (default Gemma 4 12B, MLX) over an OpenAI-compatible endpoint —
+fast, private, zero cost — with an automatic fallback to Claude Haiku if the
+local server is unreachable. Image/vision parsing always uses Claude Haiku via
+the Anthropic SDK. Swap the local model by setting TEXT_LLM_MODEL / LOCAL_LLM_BASE.
 
 API key (ANTHROPIC_API_KEY) comes from the shared sops secrets via secrets_loader.
 """
@@ -19,9 +20,9 @@ import anthropic
 ANTHROPIC_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5")
 MAX_TOKENS = 1024
 
-# --- Local text model (Ollama, OpenAI-compatible endpoint) ---
-OLLAMA_BASE = os.getenv("OLLAMA_BASE", "http://localhost:11434/v1").rstrip("/")
-TEXT_LLM_MODEL = os.getenv("TEXT_LLM_MODEL", "qwen2.5:14b")
+# --- Local text model (OpenAI-compatible server; mlx-vlm by default) ---
+LOCAL_LLM_BASE = os.getenv("LOCAL_LLM_BASE", "http://127.0.0.1:8080/v1").rstrip("/")
+TEXT_LLM_MODEL = os.getenv("TEXT_LLM_MODEL", "mlx-community/gemma-4-12B-it-qat-4bit")
 
 # System prompt forcing structured JSON outputs
 SYSTEM_PROMPT = """You are a precision data-extraction assistant. Your job is to extract biometric and habit data from the user's free-form chat message and output it in STRICT JSON format.
@@ -93,11 +94,11 @@ def _get_client():
 
 
 # ---------------------------------------------------------------------------
-# Text backend: local Ollama first, Anthropic Haiku as fallback
+# Text backend: local mlx-vlm server first, Anthropic Haiku as fallback
 # ---------------------------------------------------------------------------
 
-def _ollama_chat(system, user_text, want_json):
-    """Call the local Ollama model via its OpenAI-compatible endpoint."""
+def _local_chat(system, user_text, want_json):
+    """Call the local OpenAI-compatible LLM server (mlx-vlm)."""
     payload = {
         "model": TEXT_LLM_MODEL,
         "messages": [
@@ -110,12 +111,12 @@ def _ollama_chat(system, user_text, want_json):
         payload["response_format"] = {"type": "json_object"}
 
     req = urllib.request.Request(
-        f"{OLLAMA_BASE}/chat/completions",
+        f"{LOCAL_LLM_BASE}/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer ollama"},
+        headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=90) as resp:
+    with urllib.request.urlopen(req, timeout=120) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     return data["choices"][0]["message"]["content"].strip()
 
@@ -132,9 +133,9 @@ def _anthropic_chat(system, user_text):
 
 
 def _text_chat(system, user_text, want_json=True):
-    """Run a text completion locally (Ollama) with Anthropic fallback."""
+    """Run a text completion on the local server with Anthropic fallback."""
     try:
-        content = _ollama_chat(system, user_text, want_json)
+        content = _local_chat(system, user_text, want_json)
         print(f"🖥️  Local LLM ({TEXT_LLM_MODEL}) responded.")
         return content
     except (urllib.error.URLError, urllib.error.HTTPError, KeyError, TimeoutError) as e:

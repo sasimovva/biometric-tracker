@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sasimovva.mlx-llm</string>
+    <!-- Local LLM server (mlx-vlm) for the bot's text parsing. Runs as the user
+         so HOME-relative paths (HuggingFace model cache in ~/.cache) resolve. -->
+    <key>UserName</key>
+    <string>sasimovva</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/sasimovva</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sasimovva/Projects/biometric-tracker/mlx-venv/bin/python</string>
+        <string>-m</string>
+        <string>mlx_vlm.server</string>
+        <string>--model</string>
+        <string>mlx-community/gemma-4-12B-it-qat-4bit</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>8080</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/sasimovva/Projects/biometric-tracker</string>
+    <key>StandardOutPath</key>
+    <string>/tmp/mlx-llm.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/mlx-llm.log</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>

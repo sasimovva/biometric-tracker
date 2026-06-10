@@ -71,9 +71,12 @@ webhook on startup; the Orchestrator's `telegram_bot.py` was changed to `deleteW
 python3 -m venv venv
 venv/bin/pip install pyTelegramBotAPI python-dotenv garminconnect anthropic
 
-# Local text model (Ollama). Pull once; run the server.
-ollama pull qwen2.5:14b
-ollama serve            # foreground (or use the launchd agent below for persistence)
+# Local text model server (mlx-vlm, separate python3.13 venv — mlx needs <=3.13).
+# Model auto-downloads from HuggingFace on first run into ~/.cache/huggingface.
+python3.13 -m venv mlx-venv
+mlx-venv/bin/pip install mlx-vlm
+mlx-venv/bin/python -m mlx_vlm.server --model mlx-community/gemma-4-12B-it-qat-4bit \
+  --host 127.0.0.1 --port 8080      # foreground (or use the launchd daemon below)
 
 # Run the Telegram bot (long-polling, foreground)
 venv/bin/python telegram_bot.py
@@ -82,19 +85,19 @@ venv/bin/python telegram_bot.py
 # LaunchDaemons, NOT LaunchAgents. Agents only load at GUI login (gui/$(id -u) fails
 # with error 125 over SSH and never auto-loads without a console session). Daemons load
 # at BOOT via the system domain. They run as the user (UserName=sasimovva) with HOME/PATH
-# set so ollama models, the sops age key, git/ssh, and the venv all resolve. Needs sudo:
-sudo cp com.sasimovva.ollama.daemon.plist        /Library/LaunchDaemons/com.sasimovva.ollama.plist
+# set so the model cache, sops age key, git/ssh, and the venvs all resolve. Needs sudo:
+sudo cp com.sasimovva.mlx-llm.daemon.plist       /Library/LaunchDaemons/com.sasimovva.mlx-llm.plist
 sudo cp com.sasimovva.biometric-bot.daemon.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
-sudo chown root:wheel /Library/LaunchDaemons/com.sasimovva.ollama.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
-sudo chmod 644        /Library/LaunchDaemons/com.sasimovva.ollama.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
-sudo launchctl bootstrap system /Library/LaunchDaemons/com.sasimovva.ollama.plist
+sudo chown root:wheel /Library/LaunchDaemons/com.sasimovva.mlx-llm.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+sudo chmod 644        /Library/LaunchDaemons/com.sasimovva.mlx-llm.plist /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.sasimovva.mlx-llm.plist
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.sasimovva.biometric-bot.plist
 launchctl print system/com.sasimovva.biometric-bot | head   # verify (look for state = running)
 # Stop / restart a service (sudo, system domain):
 # sudo launchctl bootout   system/com.sasimovva.biometric-bot
-# sudo launchctl kickstart -k system/com.sasimovva.biometric-bot
-# Only ONE bot poller / ONE ollama at a time — stop any manual instances first.
-# (com.sasimovva.*.plist without ".daemon" are the GUI-Mac LaunchAgent variants — unused here.)
+# sudo launchctl kickstart -k system/com.sasimovva.biometric-bot   # after pulling new bot code
+# Only ONE bot poller / ONE mlx server at a time — stop any manual instances first.
+# (Ollama has been removed; com.sasimovva.ollama.* plists are legacy/unused.)
 
 # Sync the last N days of Garmin workouts (needs GARMIN_EMAIL / GARMIN_PASSWORD)
 venv/bin/python import_garmin.py --days 7
@@ -113,16 +116,20 @@ venv/bin/python secrets_loader.py
 `llm_parser.py` routes by modality:
 
 - **Text** (intent classification, data extraction, question answering) runs on a **local
-  model via Ollama** — default `qwen2.5:14b` (`TEXT_LLM_MODEL`, endpoint `OLLAMA_BASE`,
-  default `http://localhost:11434/v1`). Free, private, fast on the M4 Mac mini. If Ollama is
-  unreachable it **falls back to Claude Haiku** automatically.
+  model served by mlx-vlm** — default `mlx-community/gemma-4-12B-it-qat-4bit`
+  (`TEXT_LLM_MODEL`, endpoint `LOCAL_LLM_BASE`, default `http://127.0.0.1:8080/v1`). Free,
+  private, Metal-accelerated on the M4. If the local server is unreachable it **falls back to
+  Claude Haiku** automatically. Swap models by changing `TEXT_LLM_MODEL` (and the model in the
+  mlx-llm daemon plist). Note: Gemma 4 is multimodal (`gemma4_unified`), which is why it needs
+  **mlx-vlm**, not mlx-lm (text-only). Typical latency: intent ~2-4s, query ~9s, full-workout
+  extraction ~30s.
 - **Images** (Garmin screenshots) always use the **Anthropic SDK** with **Claude Haiku 4.5**
-  (`claude-haiku-4-5`, override via `LLM_MODEL`) — vision needs a vision model. ~$0.004/image.
+  (`claude-haiku-4-5`, override via `LLM_MODEL`) — ~$0.004/image.
 
 `ANTHROPIC_API_KEY` comes from the shared sops secrets via `secrets_loader`; the Anthropic
-client is built lazily. **Ollama must be running** for local text (`ollama serve`, or
-`brew services start ollama` from a normal terminal for reboot persistence). Pull the model
-once with `ollama pull qwen2.5:14b`.
+client is built lazily. The **mlx-vlm server must be running** for local text (see the
+mlx-llm launchd daemon above). The bot venv (3.14) only HTTP-calls it; mlx itself lives in the
+separate `mlx-venv` (3.13).
 
 ### Text intent routing
 
