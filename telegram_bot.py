@@ -222,12 +222,6 @@ def get_aggregate_stats():
     )
     return report
 
-# Knowledge files loaded as context for plan/protocol questions (router actions).
-KNOWLEDGE_CONTEXT = {
-    "plan": "workout_routine.md",
-    "protocol": "protocol_baseline.md",
-}
-
 def load_knowledge(filename):
     path = os.path.join(os.path.dirname(__file__), 'knowledge', filename)
     try:
@@ -235,6 +229,20 @@ def load_knowledge(filename):
             return f.read()
     except Exception:
         return "(reference file unavailable)"
+
+# Query actions → (section label, context loader). Order = order in the prompt.
+# Adding a new query action is just a new row here + the action in ROUTER_PROMPT.
+QUERY_CONTEXTS = [
+    ("history",  "Recent workouts (most recent first)", lambda: get_recent_workouts_context()),
+    ("plan",     "Training plan / weekly schedule",     lambda: load_knowledge("workout_routine.md")),
+    ("protocol", "Protocol — diet, fasting & RS2 rules", lambda: load_knowledge("protocol_baseline.md")),
+]
+
+def build_context(actions):
+    """Concatenate the labeled context for every requested query action."""
+    parts = [f"=== {label} ===\n{loader()}"
+             for key, label, loader in QUERY_CONTEXTS if key in actions]
+    return "\n\n".join(parts) if parts else get_recent_workouts_context()
 
 # Recent workouts as a compact, one-line-per-workout context for NL questions.
 # Compact (vs full JSON) keeps the prompt small so the local model answers fast.
@@ -369,11 +377,11 @@ def handle_text_updates(message):
     text = message.text
     print(f"📩 IN  (user {message.from_user.id}): {text!r}")
 
-    # Route to one action, then load that action's context for the answer.
-    action = route(text)
-    print(f"🧭 action: {action}")
+    # Route to the set of actions, then load all their contexts for one answer.
+    actions = route(text)
+    print(f"🧭 actions: {actions}")
 
-    if action == "log":
+    if "log" in actions:
         parsed = parse_user_input(text)
         if not parsed:
             bot.reply_to(message, "⚠️ Failed to parse details. Please check model status or endpoint availability.")
@@ -381,13 +389,9 @@ def handle_text_updates(message):
         process_parsed_payload(message, parsed)
         return
 
-    # Query-style actions: a knowledge file (plan/protocol) or logged history.
-    if action in KNOWLEDGE_CONTEXT:
-        context = load_knowledge(KNOWLEDGE_CONTEXT[action])
-    else:  # history
-        context = get_recent_workouts_context()
-    answer = answer_query(text, context)
-    print(f"📤 OUT ({action}): {answer!r}")
+    # Query-style: combine the contexts for every requested source, answer once.
+    answer = answer_query(text, build_context(actions))
+    print(f"📤 OUT ({'+'.join(actions)}): {answer!r}")
     bot.reply_to(message, answer)
 
 # Handle image updates

@@ -67,14 +67,16 @@ Rules for extraction:
 4. If the user mentions fasting or TRF state (e.g. 'struggling with TRF', 'started fast', 'completed 36h fast'), log it in 'trf_status'.
 """
 
-ROUTER_PROMPT = """You route a fitness-tracker chat message to exactly ONE action.
+ROUTER_PROMPT = """You decide which information source(s) are needed to fully respond to a fitness-tracker chat message. Pick ALL that apply.
 
-- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "started my 36h fast").
-- "history": the user ASKS about their OWN PAST logged workouts/metrics (e.g. "show me my recent run", "how many miles this week", "what was my longest hike", "average heart rate").
-- "plan": the user ASKS about their TRAINING SCHEDULE or what to do (e.g. "what's my workout today", "what's on Tuesday", "how long should I ruck", "what's the weekly split").
-- "protocol": the user ASKS about diet/fasting RULES (e.g. "when does my eating window open", "how much potato starch", "when do I start my fast", "what supplements", "smoothie rules", "hydration target").
+- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "started my 36h fast"). If recording, this is the ONLY action.
+- "history": needs the user's OWN PAST logged workouts/metrics (e.g. "show me my recent run", "how many miles this week", "what was my longest hike").
+- "plan": needs the user's TRAINING SCHEDULE / what to do (e.g. "what's my workout today", "what's on Tuesday", "how long should I ruck").
+- "protocol": needs the diet/fasting RULES (e.g. "when does my eating window open", "how much potato starch", "when do I start my fast", "supplements", "hydration").
 
-Respond with a single JSON object only: {"action": "log"|"history"|"plan"|"protocol"}."""
+A question can need MORE THAN ONE source, e.g. "what's my workout today and have I been hitting my mileage?" → ["plan","history"]; "did I break my fast correctly this week?" → ["protocol","history"].
+
+Respond with a single JSON object only: {"actions": ["..."]} — one or more of: log, history, plan, protocol."""
 
 VALID_ACTIONS = {"log", "history", "plan", "protocol"}
 
@@ -163,16 +165,19 @@ def _extract_json(content):
 # ---------------------------------------------------------------------------
 
 def route(text):
-    """Route a free-text message to one action (log/history/plan/protocol).
+    """Return the list of actions a message needs (subset of VALID_ACTIONS).
 
-    Defaults to 'log' on failure (data-preserving: a misrouted question just
-    yields an empty extraction, whereas a dropped log loses data)."""
+    'log' is exclusive (recording, not asking). Falls back to ['log'] on error
+    (data-preserving), or ['history'] if the model named no valid action."""
     try:
-        action = _extract_json(_text_chat(ROUTER_PROMPT, text, want_json=True)).get("action")
-        return action if action in VALID_ACTIONS else "log"
+        raw = _extract_json(_text_chat(ROUTER_PROMPT, text, want_json=True)).get("actions", [])
+        actions = [a for a in raw if a in VALID_ACTIONS]
+        if "log" in actions:
+            return ["log"]
+        return actions or ["history"]
     except Exception as e:
         print(f"⚠️  Router failed ({e}); defaulting to 'log'.")
-        return "log"
+        return ["log"]
 
 
 def answer_query(text, context):
