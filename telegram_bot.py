@@ -13,7 +13,7 @@ import base64
 import subprocess
 from datetime import datetime, date
 import telebot
-from llm_parser import parse_user_input, parse_image_input, classify_intent, answer_query
+from llm_parser import parse_user_input, parse_image_input, route, answer_query
 from import_garmin import update_workout_database, update_markdown_dashboard
 from query_workouts import load_workouts
 
@@ -222,6 +222,20 @@ def get_aggregate_stats():
     )
     return report
 
+# Knowledge files loaded as context for plan/protocol questions (router actions).
+KNOWLEDGE_CONTEXT = {
+    "plan": "workout_routine.md",
+    "protocol": "protocol_baseline.md",
+}
+
+def load_knowledge(filename):
+    path = os.path.join(os.path.dirname(__file__), 'knowledge', filename)
+    try:
+        with open(path) as f:
+            return f.read()
+    except Exception:
+        return "(reference file unavailable)"
+
 # Recent workouts as a compact, one-line-per-workout context for NL questions.
 # Compact (vs full JSON) keeps the prompt small so the local model answers fast.
 def get_recent_workouts_context(limit=15):
@@ -259,9 +273,10 @@ def send_welcome(message):
         "• _'Just completed 18h fast and took 20g potato starch'_\n"
         "• _'Completed 3.5 mile ruck with 30 lbs in 55 mins'_\n\n"
         "*Ask questions (free-form):*\n"
-        "• _'Show me my recent run'_\n"
-        "• _'How many total miles have I logged?'_\n"
-        "• _'What was my longest hike?'_"
+        "• _'Show me my recent run'_  (history)\n"
+        "• _'How many total miles have I logged?'_  (history)\n"
+        "• _'What's my workout today?'_  (plan)\n"
+        "• _'When does my eating window open?'_  (protocol)"
     )
     bot.reply_to(message, help_text, parse_mode="Markdown")
 
@@ -354,19 +369,26 @@ def handle_text_updates(message):
     text = message.text
     print(f"📩 IN  (user {message.from_user.id}): {text!r}")
 
-    # Route by intent: is the user asking about their data, or logging new data?
-    if classify_intent(text) == "query":
-        answer = answer_query(text, get_recent_workouts_context())
-        print(f"📤 OUT (query): {answer!r}")
-        bot.reply_to(message, answer)
+    # Route to one action, then load that action's context for the answer.
+    action = route(text)
+    print(f"🧭 action: {action}")
+
+    if action == "log":
+        parsed = parse_user_input(text)
+        if not parsed:
+            bot.reply_to(message, "⚠️ Failed to parse details. Please check model status or endpoint availability.")
+            return
+        process_parsed_payload(message, parsed)
         return
 
-    parsed = parse_user_input(text)
-    if not parsed:
-        bot.reply_to(message, "⚠️ Failed to parse details. Please check model status or endpoint availability.")
-        return
-
-    process_parsed_payload(message, parsed)
+    # Query-style actions: a knowledge file (plan/protocol) or logged history.
+    if action in KNOWLEDGE_CONTEXT:
+        context = load_knowledge(KNOWLEDGE_CONTEXT[action])
+    else:  # history
+        context = get_recent_workouts_context()
+    answer = answer_query(text, context)
+    print(f"📤 OUT ({action}): {answer!r}")
+    bot.reply_to(message, answer)
 
 # Handle image updates
 @bot.message_handler(content_types=['photo'])

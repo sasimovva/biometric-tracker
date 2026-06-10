@@ -67,18 +67,20 @@ Rules for extraction:
 4. If the user mentions fasting or TRF state (e.g. 'struggling with TRF', 'started fast', 'completed 36h fast'), log it in 'trf_status'.
 """
 
-INTENT_PROMPT = """You classify a fitness chat message as one of two intents.
+ROUTER_PROMPT = """You route a fitness-tracker chat message to exactly ONE action.
 
-- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "finished a 36h fast").
-- "query": the user is ASKING a question about their existing data (e.g. "show me my recent run", "how many miles this week", "what was my longest hike", "what's my average heart rate").
+- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "started my 36h fast").
+- "history": the user ASKS about their OWN PAST logged workouts/metrics (e.g. "show me my recent run", "how many miles this week", "what was my longest hike", "average heart rate").
+- "plan": the user ASKS about their TRAINING SCHEDULE or what to do (e.g. "what's my workout today", "what's on Tuesday", "how long should I ruck", "what's the weekly split").
+- "protocol": the user ASKS about diet/fasting RULES (e.g. "when does my eating window open", "how much potato starch", "when do I start my fast", "what supplements", "smoothie rules", "hydration target").
 
-Respond with a single JSON object only: {"intent": "log"} or {"intent": "query"}."""
+Respond with a single JSON object only: {"action": "log"|"history"|"plan"|"protocol"}."""
 
-QUERY_PROMPT = """You are a helpful fitness assistant answering questions about the user's workout history.
+VALID_ACTIONS = {"log", "history", "plan", "protocol"}
 
-You are given the user's recent workouts as JSON. Answer the user's question using ONLY this data. Be concise and friendly. Use the units in the data (miles, bpm, etc.). If the data does not contain the answer, say so plainly. Do not invent numbers.
+QUERY_PROMPT = """You are a helpful fitness assistant. Answer the user's question using ONLY the reference information below. Be concise and friendly. Use the units in the data (miles, bpm, etc.). If the information does not contain the answer, say so plainly. Do not invent facts.
 
-Recent workouts (most recent first):
+Reference information:
 {context}
 """
 
@@ -160,19 +162,22 @@ def _extract_json(content):
 # Public API
 # ---------------------------------------------------------------------------
 
-def classify_intent(text):
-    """Return 'log' or 'query' for a free-text message. Defaults to 'log'."""
+def route(text):
+    """Route a free-text message to one action (log/history/plan/protocol).
+
+    Defaults to 'log' on failure (data-preserving: a misrouted question just
+    yields an empty extraction, whereas a dropped log loses data)."""
     try:
-        result = _extract_json(_text_chat(INTENT_PROMPT, text, want_json=True))
-        return "query" if result.get("intent") == "query" else "log"
+        action = _extract_json(_text_chat(ROUTER_PROMPT, text, want_json=True)).get("action")
+        return action if action in VALID_ACTIONS else "log"
     except Exception as e:
-        print(f"⚠️  Intent classification failed ({e}); defaulting to 'log'.")
+        print(f"⚠️  Router failed ({e}); defaulting to 'log'.")
         return "log"
 
 
-def answer_query(text, workouts_json):
-    """Answer a natural-language question using the recent-workouts JSON context."""
-    system = QUERY_PROMPT.format(context=workouts_json)
+def answer_query(text, context):
+    """Answer a natural-language question using the provided reference context."""
+    system = QUERY_PROMPT.format(context=context)
     try:
         return _text_chat(system, text, want_json=False).strip()
     except Exception as e:

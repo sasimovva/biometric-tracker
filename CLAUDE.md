@@ -131,13 +131,17 @@ client is built lazily. The **mlx-vlm server must be running** for local text (s
 mlx-llm launchd daemon above). The bot venv (3.14) only HTTP-calls it; mlx itself lives in the
 separate `mlx-venv` (3.13).
 
-### Text intent routing
+### Text routing (router → load context → act)
 
-Free-text messages are first classified by the local model as **log** vs **query**
-(`classify_intent`):
+Each free-text message gets ONE router call (`route()` in `llm_parser.py`) that picks an
+action; a handler then loads that action's context and makes a second call:
 - **log** → `parse_user_input` extracts metrics → saved to DB + dashboard.
-- **query** → `answer_query` answers in natural language using the last ~20 workouts as
-  context (e.g. "show me my recent run", "how many miles have I logged?").
+- **history** → `answer_query` over the last ~15 workouts (`get_recent_workouts_context`).
+- **plan** → `answer_query` over `knowledge/workout_routine.md` (training schedule).
+- **protocol** → `answer_query` over `knowledge/protocol_baseline.md` (TRF/fasting/RS2/diet).
+
+Add an action by extending `ROUTER_PROMPT`/`VALID_ACTIONS` and the `KNOWLEDGE_CONTEXT` map
+in `telegram_bot.py`. Two LLM calls per message (route + act).
 
 The `/start`, `/help`, `/stats`, and `/sync` commands work without any LLM call.
 
