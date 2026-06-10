@@ -69,7 +69,8 @@ webhook on startup; the Orchestrator's `telegram_bot.py` was changed to `deleteW
 ```bash
 # One-time setup: venv + deps (uv not installed on this machine, so use a venv)
 python3 -m venv venv
-venv/bin/pip install pyTelegramBotAPI python-dotenv garminconnect anthropic
+venv/bin/pip install pyTelegramBotAPI python-dotenv garminconnect anthropic \
+  "pydantic-ai-slim[openai,anthropic]"
 
 # Local text model server (mlx-vlm, separate python3.13 venv — mlx needs <=3.13).
 # Model auto-downloads from HuggingFace on first run into ~/.cache/huggingface.
@@ -111,25 +112,27 @@ venv/bin/python query_workouts.py --date 2026-06-04
 venv/bin/python secrets_loader.py
 ```
 
-## LLM configuration (hybrid: local text + cloud vision)
+## LLM configuration (Pydantic AI; local text + cloud vision)
 
-`llm_parser.py` routes by modality:
+`llm_parser.py` is built on **Pydantic AI** — schemas (`RouteDecision`, `BiometricEntry`) are
+typed Pydantic models; the framework generates the prompt, validates the output, and retries
+on a bad parse (no hand-written JSON schema or regex). Output uses `PromptedOutput` mode so it
+works on the local model (mlx-vlm doesn't do tool-calling). Routes by modality:
 
-- **Text** (intent classification, data extraction, question answering) runs on a **local
-  model served by mlx-vlm** — default `mlx-community/gemma-4-12B-it-qat-4bit`
-  (`TEXT_LLM_MODEL`, endpoint `LOCAL_LLM_BASE`, default `http://127.0.0.1:8080/v1`). Free,
-  private, Metal-accelerated on the M4. If the local server is unreachable it **falls back to
-  Claude Haiku** automatically. Swap models by changing `TEXT_LLM_MODEL` (and the model in the
-  mlx-llm daemon plist). Note: Gemma 4 is multimodal (`gemma4_unified`), which is why it needs
-  **mlx-vlm**, not mlx-lm (text-only). Typical latency: intent ~2-4s, query ~9s, full-workout
-  extraction ~30s.
-- **Images** (Garmin screenshots) always use the **Anthropic SDK** with **Claude Haiku 4.5**
-  (`claude-haiku-4-5`, override via `LLM_MODEL`) — ~$0.004/image.
+- **Text** (route / extract / answer) runs on a **local model served by mlx-vlm** — default
+  `mlx-community/gemma-4-12B-it-qat-4bit` (`TEXT_LLM_MODEL`, endpoint `LOCAL_LLM_BASE`, default
+  `http://127.0.0.1:8080/v1`). Each text role has a (local, Haiku) agent pair; on a local
+  failure it **falls back to Claude Haiku**. Gemma 4 is multimodal (`gemma4_unified`), so it
+  needs **mlx-vlm**, not mlx-lm. Latency: route ~3s, query ~9s, full-workout extraction ~30s.
+- **Images** (Garmin screenshots) — `VISION_BACKEND` (default `"cloud"`) = **Claude Haiku 4.5**
+  for best OCR accuracy; set `"local"` to use Gemma 4 via mlx-vlm (fully local) with a Haiku
+  fallback on error. Cloud ~$0.004/image.
 
-`ANTHROPIC_API_KEY` comes from the shared sops secrets via `secrets_loader`; the Anthropic
-client is built lazily. The **mlx-vlm server must be running** for local text (see the
-mlx-llm launchd daemon above). The bot venv (3.14) only HTTP-calls it; mlx itself lives in the
-separate `mlx-venv` (3.13).
+`ANTHROPIC_API_KEY` comes from the shared sops secrets via `secrets_loader`; agents are built
+lazily (after the key is loaded). The **mlx-vlm server must be running** for local text. The
+bot venv (3.14) holds `pydantic-ai-slim[openai,anthropic]`; mlx itself lives in the separate
+`mlx-venv` (3.13). `prototype_pydantic_ai.py` is a standalone, domain-agnostic template of the
+router → context → act pattern for reuse in other chat interactions.
 
 ### Text routing (router → load context → act)
 

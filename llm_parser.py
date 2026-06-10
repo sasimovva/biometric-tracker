@@ -1,177 +1,168 @@
-"""LLM extraction + querying for the biometric tracker.
+"""LLM layer on Pydantic AI: routing + structured extraction + grounded answers.
 
-Text (logging, intent classification, question answering) runs on a LOCAL model
-served by mlx-vlm (default Gemma 4 12B, MLX) over an OpenAI-compatible endpoint —
-fast, private, zero cost — with an automatic fallback to Claude Haiku if the
-local server is unreachable. Image/vision parsing always uses Claude Haiku via
-the Anthropic SDK. Swap the local model by setting TEXT_LLM_MODEL / LOCAL_LLM_BASE.
+Text (route / extract / answer) runs on the local mlx-vlm server (Gemma 4) with an
+automatic fallback to Claude Haiku if the local server fails. Image extraction uses
+Claude Haiku (vision). Schemas are Pydantic-typed — Pydantic AI generates the prompt,
+validates the output, and retries on a bad parse (replacing the old hand-written JSON
+schema + regex). ANTHROPIC_API_KEY comes from the shared sops secrets via secrets_loader.
 
-API key (ANTHROPIC_API_KEY) comes from the shared sops secrets via secrets_loader.
+Public interface is unchanged (route / parse_user_input / answer_query /
+parse_image_input) so telegram_bot.py is untouched.
 """
-import json
+from __future__ import annotations
+
+import base64
 import os
-import re
-import urllib.request
-import urllib.error
+from typing import Literal
 
-import anthropic
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent, BinaryContent, PromptedOutput
+from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
-# --- Vision / Anthropic fallback model ---
-ANTHROPIC_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5")
-MAX_TOKENS = 1024
-
-# --- Local text model (OpenAI-compatible server; mlx-vlm by default) ---
 LOCAL_LLM_BASE = os.getenv("LOCAL_LLM_BASE", "http://127.0.0.1:8080/v1").rstrip("/")
 TEXT_LLM_MODEL = os.getenv("TEXT_LLM_MODEL", "mlx-community/gemma-4-12B-it-qat-4bit")
+ANTHROPIC_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5")
+# Photo OCR backend: "local" = Gemma 4 via mlx-vlm (fully local/free) with a Haiku
+# fallback on error; "cloud" = Claude Haiku (best accuracy on dense screenshots).
+VISION_BACKEND = os.getenv("VISION_BACKEND", "local")
 
-# System prompt forcing structured JSON outputs
-SYSTEM_PROMPT = """You are a precision data-extraction assistant. Your job is to extract biometric and habit data from the user's free-form chat message and output it in STRICT JSON format.
-
-Your output must be a single JSON object. Do not include any explanation, markdown formatting, or notes.
-
-The JSON schema you must return is:
-{
-  "weight_lbs": null or float (e.g. 185.4),
-  "trf_status": null or string (e.g. "✅", "❌", "Fast Start", "Fasting", "36h Fast Completed"),
-  "rs2_dose": null or string (e.g. "1 tbsp (Oats)", "20g", "0 tbsp"),
-  "workout": null or {
-    "activity_type": string (e.g. "Hiking", "Running", "Rucking", "Indoor Cycling", "Versaclimber HIIT"),
-    "title": string (e.g. "Weighted Outdoor Hike (Ruck)"),
-    "distance_miles": float,
-    "duration": string in format "HH:MM:SS" (e.g. "00:59:40"),
-    "avg_pace": string (e.g. "18:31" or "N/A"),
-    "calories_burned": integer,
-    "active_calories": integer,
-    "resting_calories": integer,
-    "avg_hr": integer,
-    "max_hr": integer,
-    "elevation_gain_ft": integer,
-    "elevation_loss_ft": integer,
-    "steps": integer,
-    "training_effect": {
-      "primary": string (e.g. "Base (Low Aerobic)", "Threshold (High Aerobic)"),
-      "aerobic": float (e.g. 2.8),
-      "anaerobic": float (e.g. 0.0),
-      "load": integer
-    },
-    "intensity_minutes": integer,
-    "body_battery_impact": negative integer (e.g. -12),
-    "notes": string
-  }
-}
-
-Rules for extraction:
-1. Only populate fields that are mentioned or can be reasonably inferred. If a field is not present, set it to null.
-2. For workouts: if the user describes a workout (e.g., rucking, running, cycling), extract all metrics. If steps are not mentioned but it is a hike/ruck/run, estimate steps based on ~2,000 steps per mile. If pace is not mentioned, calculate it from duration and distance. If training effect, intensity minutes, or body battery are not mentioned, estimate sensible base defaults (e.g. aerobic 2.5-3.0, anaerobic 0.0, load 40, body battery -10).
-3. If the user mentions taking their potato starch, log it in 'rs2_dose'.
-4. If the user mentions fasting or TRF state (e.g. 'struggling with TRF', 'started fast', 'completed 36h fast'), log it in 'trf_status'.
-"""
-
-ROUTER_PROMPT = """You decide which information source(s) are needed to fully respond to a fitness-tracker chat message. Pick ALL that apply.
-
-- "log": the user is RECORDING new data (e.g. "weight 185", "did a 4 mile ruck", "took my potato starch", "started my 36h fast"). If recording, this is the ONLY action.
-- "history": needs the user's OWN PAST logged workouts/metrics (e.g. "show me my recent run", "how many miles this week", "what was my longest hike").
-- "plan": needs the user's TRAINING SCHEDULE / what to do (e.g. "what's my workout today", "what's on Tuesday", "how long should I ruck").
-- "protocol": needs the diet/fasting RULES (e.g. "when does my eating window open", "how much potato starch", "when do I start my fast", "supplements", "hydration").
-
-A question can need MORE THAN ONE source, e.g. "what's my workout today and have I been hitting my mileage?" → ["plan","history"]; "did I break my fast correctly this week?" → ["protocol","history"].
-
-Respond with a single JSON object only: {"actions": ["..."]} — one or more of: log, history, plan, protocol."""
-
+# ---------------------------------------------------------------------------
+# Typed schemas (replace the hand-written JSON-schema prompt + regex parsing)
+# ---------------------------------------------------------------------------
+Action = Literal["log", "history", "plan", "protocol"]
 VALID_ACTIONS = {"log", "history", "plan", "protocol"}
 
-QUERY_PROMPT = """You are a helpful fitness assistant. Answer the user's question using ONLY the reference information below. Be concise and friendly. Use the units in the data (miles, bpm, etc.). If the information does not contain the answer, say so plainly. Do not invent facts.
 
-Reference information:
-{context}
-"""
+class RouteDecision(BaseModel):
+    """Which information source(s) are needed to respond to a message."""
+    actions: list[Action] = Field(
+        description="All sources needed. 'log' = recording new data (exclusive — "
+        "if recording, this is the only action). 'history' = the user's past "
+        "logged workouts/metrics. 'plan' = training schedule / what to do. "
+        "'protocol' = diet/fasting/RS2 rules. A question may need several."
+    )
 
-_client = None
+
+class TrainingEffect(BaseModel):
+    primary: str | None = None
+    aerobic: float | None = None
+    anaerobic: float | None = None
+    load: int | None = None
 
 
-def _get_client():
-    """Lazily build the Anthropic client (key is set by secrets_loader at runtime)."""
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic()
-    return _client
+class Workout(BaseModel):
+    activity_type: str | None = None
+    title: str | None = None
+    distance_miles: float | None = None
+    duration: str | None = None  # "HH:MM:SS"
+    avg_pace: str | None = None
+    calories_burned: int | None = None
+    active_calories: int | None = None
+    resting_calories: int | None = None
+    avg_hr: int | None = None
+    max_hr: int | None = None
+    elevation_gain_ft: int | None = None
+    elevation_loss_ft: int | None = None
+    steps: int | None = None
+    training_effect: TrainingEffect | None = None
+    intensity_minutes: int | None = None
+    body_battery_impact: int | None = None
+    notes: str | None = None
+
+
+class BiometricEntry(BaseModel):
+    """Biometric/habit/workout data extracted from a message or screenshot."""
+    weight_lbs: float | None = None
+    trf_status: str | None = None  # e.g. "Fast Start", "Fasting", "36h Fast Completed"
+    rs2_dose: str | None = None    # e.g. "20g", "1 tbsp (Oats)"
+    workout: Workout | None = None
 
 
 # ---------------------------------------------------------------------------
-# Text backend: local mlx-vlm server first, Anthropic Haiku as fallback
+# Instructions
 # ---------------------------------------------------------------------------
+ROUTER_INSTRUCTIONS = (
+    "You route a fitness-tracker chat message. Decide which information source(s) "
+    "are needed to fully respond. 'log' is exclusive (recording new data, not asking)."
+)
 
-def _local_chat(system, user_text, want_json):
-    """Call the local OpenAI-compatible LLM server (mlx-vlm)."""
-    payload = {
-        "model": TEXT_LLM_MODEL,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_text},
-        ],
-        "temperature": 0.1,
-    }
-    if want_json:
-        payload["response_format"] = {"type": "json_object"}
+EXTRACT_INSTRUCTIONS = (
+    "Extract biometric, habit, and workout data from the message. Only fill fields "
+    "that are stated or clearly inferable; leave everything else null. Duration is "
+    "HH:MM:SS. For a workout: if steps aren't given for a hike/ruck/run, estimate at "
+    "~2000 steps per mile; if pace isn't given, compute it from duration and distance; "
+    "use sensible base defaults for training effect (aerobic 2.5-3.0, anaerobic 0.0, "
+    "load 40, body_battery_impact -10) only when a workout is present. Potato starch "
+    "goes in rs2_dose; fasting/TRF state goes in trf_status."
+)
 
-    req = urllib.request.Request(
-        f"{LOCAL_LLM_BASE}/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
-        method="POST",
+ANSWER_INSTRUCTIONS = (
+    "You are a helpful fitness assistant. Answer the user's question using ONLY the "
+    "reference information in the message. Be concise and friendly; use the units in "
+    "the data (miles, bpm, etc.). If the information does not contain the answer, say "
+    "so plainly. Do not invent facts."
+)
+
+VISION_INSTRUCTIONS = (
+    "Extract all fitness, workout, and biometric numbers from the screenshot into the "
+    "structured fields. Only fill what is visible or clearly inferable; leave the rest "
+    "null. Duration is HH:MM:SS."
+)
+
+# ---------------------------------------------------------------------------
+# Lazy agent construction (so ANTHROPIC_API_KEY is loaded before the Anthropic
+# client is built). Each text role has a (local, haiku) pair for fallback.
+# ---------------------------------------------------------------------------
+_CACHE: dict = {}
+
+
+def _agents() -> dict:
+    if _CACHE:
+        return _CACHE
+    local = OpenAIChatModel(
+        TEXT_LLM_MODEL,
+        provider=OpenAIProvider(base_url=LOCAL_LLM_BASE, api_key="local"),
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-    return data["choices"][0]["message"]["content"].strip()
+    haiku = AnthropicModel(ANTHROPIC_MODEL)  # reads ANTHROPIC_API_KEY from env
+
+    def pair(output_type, instructions):
+        kw = {"instructions": instructions}
+        if output_type is not None:
+            kw["output_type"] = output_type
+        return (Agent(local, **kw), Agent(haiku, **kw))
+
+    _CACHE["router"] = pair(PromptedOutput(RouteDecision), ROUTER_INSTRUCTIONS)
+    _CACHE["extract"] = pair(PromptedOutput(BiometricEntry), EXTRACT_INSTRUCTIONS)
+    _CACHE["answer"] = pair(None, ANSWER_INSTRUCTIONS)
+    # Vision pair: local Gemma (PromptedOutput, no tool-calling) + Haiku (native).
+    _CACHE["vision_local"] = Agent(local, output_type=PromptedOutput(BiometricEntry),
+                                   instructions=VISION_INSTRUCTIONS)
+    _CACHE["vision_haiku"] = Agent(haiku, output_type=BiometricEntry,
+                                   instructions=VISION_INSTRUCTIONS)
+    return _CACHE
 
 
-def _anthropic_chat(system, user_text):
-    """Fallback text call to Claude Haiku."""
-    response = _get_client().messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=MAX_TOKENS,
-        system=system,
-        messages=[{"role": "user", "content": user_text}],
-    )
-    return next((b.text for b in response.content if b.type == "text"), "")
-
-
-def _text_chat(system, user_text, want_json=True):
-    """Run a text completion on the local server with Anthropic fallback."""
+def _run_text(role: str, *args):
+    """Run a text role on the local model, falling back to Claude Haiku on failure."""
+    local_agent, haiku_agent = _agents()[role]
     try:
-        content = _local_chat(system, user_text, want_json)
-        print(f"🖥️  Local LLM ({TEXT_LLM_MODEL}) responded.")
-        return content
-    except (urllib.error.URLError, urllib.error.HTTPError, KeyError, TimeoutError) as e:
-        print(f"⚠️  Local LLM unavailable ({e}); falling back to Claude {ANTHROPIC_MODEL}.")
-        return _anthropic_chat(system, user_text)
-
-
-def _extract_json(content):
-    """Pull a JSON object out of a model's text response."""
-    cleaned = content.strip()
-    match = re.search(r"```(?:json)?\s*(.*?)\s*```", cleaned, re.DOTALL)
-    if match:
-        cleaned = match.group(1).strip()
-    if not (cleaned.startswith("{") and cleaned.endswith("}")):
-        json_match = re.search(r"(\{.*\})", cleaned, re.DOTALL)
-        if json_match:
-            cleaned = json_match.group(1)
-    return json.loads(cleaned)
+        out = local_agent.run_sync(*args).output
+        print(f"🖥️  Local LLM ({TEXT_LLM_MODEL}) responded [{role}].")
+        return out
+    except Exception as e:
+        print(f"⚠️  Local LLM failed ({e}); falling back to Claude {ANTHROPIC_MODEL}.")
+        return haiku_agent.run_sync(*args).output
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Public API (unchanged signatures)
 # ---------------------------------------------------------------------------
-
 def route(text):
-    """Return the list of actions a message needs (subset of VALID_ACTIONS).
-
-    'log' is exclusive (recording, not asking). Falls back to ['log'] on error
-    (data-preserving), or ['history'] if the model named no valid action."""
+    """Return the list of actions a message needs. 'log' is exclusive."""
     try:
-        raw = _extract_json(_text_chat(ROUTER_PROMPT, text, want_json=True)).get("actions", [])
-        actions = [a for a in raw if a in VALID_ACTIONS]
+        actions = [a for a in _run_text("router", text).actions if a in VALID_ACTIONS]
         if "log" in actions:
             return ["log"]
         return actions or ["history"]
@@ -180,72 +171,50 @@ def route(text):
         return ["log"]
 
 
+def parse_user_input(text):
+    """Extract structured data from a free-form text message (returns dict or None)."""
+    try:
+        return _run_text("extract", f"Parse this message: {text!r}").model_dump()
+    except Exception as e:
+        print(f"❌ Text extraction failed: {e}")
+        return None
+
+
 def answer_query(text, context):
     """Answer a natural-language question using the provided reference context."""
-    system = QUERY_PROMPT.format(context=context)
     try:
-        return _text_chat(system, text, want_json=False).strip()
+        return _run_text("answer", f"{context}\n\n=== Question ===\n{text}").strip()
     except Exception as e:
         return f"⚠️ Couldn't answer that right now: {e}"
 
 
-def parse_user_input(text):
-    """Extract structured data from a free-form text message (logging)."""
-    try:
-        return _extract_json(_text_chat(SYSTEM_PROMPT, f"Parse this message: '{text}'", want_json=True))
-    except json.JSONDecodeError as e:
-        print(f"❌ Failed to parse JSON from LLM: {e}")
-        return None
-    except Exception as e:
-        print(f"❌ Unexpected error in text parsing: {e}")
-        return None
-
-
 def parse_image_input(image_base64, mime_type, text_prompt=None):
-    """Extract structured data from a workout/biometric screenshot (Claude vision)."""
-    user_text = (
-        "Identify and extract all fitness, workout, or biometric numbers from "
-        "this screenshot. "
-    )
-    if text_prompt:
-        user_text += f"Also incorporate this context: '{text_prompt}'"
+    """Extract structured data from a workout/biometric screenshot.
 
-    print(f"🔗 Sending image to Claude ({ANTHROPIC_MODEL})...")
+    VISION_BACKEND="cloud" (default) uses Claude Haiku for best OCR accuracy;
+    "local" uses Gemma 4 (mlx-vlm) and falls back to Haiku on error."""
     try:
-        response = _get_client().messages.create(
-            model=ANTHROPIC_MODEL,
-            max_tokens=MAX_TOKENS,
-            system=SYSTEM_PROMPT,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_text},
-                    {
-                        "type": "image",
-                        "source": {"type": "base64", "media_type": mime_type, "data": image_base64},
-                    },
-                ],
-            }],
-        )
-        content = next((b.text for b in response.content if b.type == "text"), "")
-        print(f"🤖 LLM Raw Response:\n{content}\n")
-        return _extract_json(content)
-    except anthropic.APIError as e:
-        print(f"❌ Anthropic API error: {e}")
-        return None
+        img = BinaryContent(data=base64.b64decode(image_base64), media_type=mime_type)
+        prompt = "Extract the fitness/workout/biometric numbers from this screenshot."
+        if text_prompt:
+            prompt += f" Additional context: {text_prompt}"
+        agents = _agents()
+        if VISION_BACKEND == "local":
+            try:
+                print(f"🖼️  Local vision ({TEXT_LLM_MODEL})...")
+                return agents["vision_local"].run_sync([prompt, img]).output.model_dump()
+            except Exception as e:
+                print(f"⚠️  Local vision failed ({e}); falling back to Claude {ANTHROPIC_MODEL}.")
+        print(f"🔗 Vision via Claude ({ANTHROPIC_MODEL})...")
+        return agents["vision_haiku"].run_sync([prompt, img]).output.model_dump()
     except Exception as e:
-        print(f"❌ Unexpected error in image parsing: {e}")
+        print(f"❌ Image extraction failed: {e}")
         return None
 
 
-# Quick local test module
 if __name__ == "__main__":
     from secrets_loader import load_shared_secrets
     load_shared_secrets()
-
-    for t in [
-        "My weight is 185.6. Did a 4 mile ruck with 20 lbs in 1 hour. HR ~120. Took 1 tbsp potato starch.",
-        "show me my recent run",
-        "how many total miles have I logged?",
-    ]:
-        print(f"\n📝 {t!r}  ->  intent: {classify_intent(t)}")
+    for t in ["weight 184 today, took 20g potato starch", "show me my recent run",
+              "what's my plan for today"]:
+        print(f"{t!r} -> {route(t)}")
