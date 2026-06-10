@@ -239,10 +239,19 @@ QUERY_CONTEXTS = [
 ]
 
 def build_context(actions):
-    """Concatenate the labeled context for every requested query action."""
-    parts = [f"=== {label} ===\n{loader()}"
-             for key, label, loader in QUERY_CONTEXTS if key in actions]
-    return "\n\n".join(parts) if parts else get_recent_workouts_context()
+    """Concatenate labeled context for the requested query actions.
+
+    Always leads with today's date/weekday so the model can resolve "today",
+    "this week", etc. against the day-of-week training plan."""
+    today = date.today()
+    parts = [f"=== Today ===\nToday is {today:%A}, {today.isoformat()}."]
+    for key, label, loader in QUERY_CONTEXTS:
+        if key in actions:
+            parts.append(f"=== {label} ===\n{loader()}")
+    if len(parts) == 1:  # no query action matched → default to history
+        parts.append("=== Recent workouts (most recent first) ===\n"
+                     + get_recent_workouts_context())
+    return "\n\n".join(parts)
 
 # Recent workouts as a compact, one-line-per-workout context for NL questions.
 # Compact (vs full JSON) keeps the prompt small so the local model answers fast.
